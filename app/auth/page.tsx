@@ -131,7 +131,7 @@ export default function AuthPage() {
     }
 
     setMessage(
-      "Акаунт створено. Якщо ввімкнене підтвердження пошти, перевір email перед входом."
+      "Акаунт створено. Якщо увімкнене підтвердження пошти, перевірте email перед входом."
     );
     setNickname("");
     setLoading(false);
@@ -141,11 +141,11 @@ export default function AuthPage() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.18),_transparent_30%),linear-gradient(to_bottom,_#09090f,_#111827,_#0b1020)] px-6 py-10 text-white">
       <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur">
         <p className="text-sm uppercase tracking-[0.24em] text-violet-200/80">
-          Genshin Draftilka
+          Genshin Pickban
         </p>
         <h1 className="mt-2 text-3xl font-bold">Вхід</h1>
         <p className="mt-2 text-sm text-white/70">
-          Увійди або створи акаунт, щоб бачити і зберігати свою колекцію.
+          Увійдіть або створіть акаунт, щоб бачити і обрати своїх персонажів.
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
@@ -177,7 +177,7 @@ export default function AuthPage() {
                 type="text"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="Твій нік"
+                placeholder="Ваш нік"
                 className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none placeholder:text-white/40 focus:border-violet-300/40"
                 minLength={3}
                 maxLength={24}
@@ -237,7 +237,7 @@ export default function AuthPage() {
             href="/collection"
             className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15"
           >
-            До колекції
+            Мої персонажі
           </Link>
           <Link
             href="/"
