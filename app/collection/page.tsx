@@ -114,6 +114,7 @@ export default function CollectionPage() {
   const [loading, setLoading] = useState(true);
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedBySlug, setSelectedBySlug] = useState<Record<string, number>>({});
   const [message, setMessage] = useState("");
@@ -130,13 +131,14 @@ export default function CollectionPage() {
     const loadData = async () => {
       setLoading(true);
       setMessage("");
+      setShowAuthPrompt(false);
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
-        setMessage("Ви ще не увійшли в акаунт. Перейдіть на /auth.");
+        setShowAuthPrompt(true);
         setLoading(false);
         return;
       }
@@ -382,6 +384,15 @@ export default function CollectionPage() {
         </div>
 
         {message && <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/85">{message}</div>}
+        {showAuthPrompt && (
+          <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/85">
+            Ви ще не увійшли в акаунт, перейдіть на{" "}
+            <Link href="/auth" className="font-semibold text-violet-200 underline decoration-violet-300/70 underline-offset-4">
+              вхід
+            </Link>
+            .
+          </div>
+        )}
 
         {loading ? (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-white/70">Завантаження персонажів...</div>
