@@ -88,7 +88,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row">
+        <div className="mt-4 mb-8 flex flex-col items-center gap-3 sm:mb-0 sm:flex-row">
           {userDisplayName ? (
             <>
               <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-100">
@@ -114,7 +114,7 @@ export default function Home() {
 
       </section>
 
-      <section className="mx-auto -mt-12 w-full max-w-6xl px-6 pb-16">
+      <section className="mx-auto mt-2 w-full max-w-6xl px-6 pb-16 md:-mt-12">
         <div className="grid items-stretch gap-4 lg:grid-cols-2">
           <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur md:p-8">
             <h2 className="text-2xl font-bold md:text-3xl">Як грати?</h2>

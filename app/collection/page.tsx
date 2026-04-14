@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CSSProperties, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCharacterImageUrl } from "../../lib/character-image";
 import { supabase } from "../../lib/supabase";
 
@@ -51,14 +51,6 @@ const WEAPON_LABELS: Record<string, (typeof WEAPONS)[number]> = {
   "Каталізатор": "Каталізатор",
   Bow: "Лук",
   "Лук": "Лук",
-};
-
-const COLLECTION_BG_STYLE: CSSProperties = {
-  backgroundColor: "#0b1020",
-  backgroundImage:
-    "radial-gradient(circle at top, rgba(168, 188, 255, 0.29), transparent 30%), linear-gradient(to bottom, #09090f, #111827, #0b1020)",
-  backgroundRepeat: "no-repeat",
-  backgroundAttachment: "fixed",
 };
 
 function formatSupabaseError(error: { message: string; code?: string } | null) {
@@ -294,7 +286,7 @@ export default function CollectionPage() {
   };
 
   return (
-    <main className="min-h-screen px-6 py-10 text-white" style={COLLECTION_BG_STYLE}>
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(118,136,214,0.16),_transparent_30%),linear-gradient(to_bottom,_#070a14,_#0b1324,_#090f1f)] px-6 py-10 text-white md:bg-[radial-gradient(circle_at_top,_rgba(168,188,255,0.29),_transparent_30%),linear-gradient(to_bottom,_#09090f,_#111827,_#0b1020)]">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur md:flex-row md:items-center md:justify-between">
           <div>
@@ -405,13 +397,16 @@ export default function CollectionPage() {
               const isSelected = selectedSet.has(character.slug);
 
               return (
-                <div
+                <button
+                  type="button"
                   key={character.slug}
+                  onClick={() => void toggleCharacter(character.slug)}
+                  disabled={savingSlug === character.slug}
                   className={`group rounded-3xl border p-5 text-left shadow-lg transition ${
                     isSelected
                       ? "border-violet-300/50 bg-violet-400/10 ring-1 ring-violet-300/30"
                       : "border-white/10 bg-white/5 hover:bg-white/8"
-                  }`}
+                  } ${savingSlug === character.slug ? "cursor-not-allowed opacity-80" : ""}`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="shrink-0">
@@ -451,15 +446,13 @@ export default function CollectionPage() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => void toggleCharacter(character.slug)}
+                        <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                             isSelected ? "bg-violet-200 text-slate-950" : "bg-white/10 text-white/70"
                           }`}
                         >
                           {savingSlug === character.slug ? "..." : isSelected ? "Є" : "Немає"}
-                        </button>
+                        </span>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/75">
@@ -488,7 +481,7 @@ export default function CollectionPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

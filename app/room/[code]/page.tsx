@@ -1119,8 +1119,9 @@ export default function RoomPage() {
     highlightImmuneSlot = false,
     removeType: "immunity" | "ban" | "pick" = type
   ) => {
-    const slotSizeClass = compact ? "h-[102px] w-[96px]" : "h-[124px] w-[122px]";
-    const imageHeightClass = compact ? "h-[76px]" : "h-24";
+    const slotSizeClass = compact ? "h-[84px] w-[74px] sm:h-[102px] sm:w-[96px]" : "h-[104px] w-[82px] sm:h-[124px] sm:w-[122px]";
+    const imageHeightClass = compact ? "h-[58px] sm:h-[76px]" : "h-[72px] sm:h-24";
+    const slotWidthClass = compact ? "w-[74px] sm:w-[96px]" : "w-[82px] sm:w-[122px]";
 
     if (!selection) {
       const emptySlotTone =
@@ -1142,7 +1143,7 @@ export default function RoomPage() {
       <button
         type="button"
         onClick={() => void removeSelectionAt(removeType, index)}
-        className={`group ${compact ? "w-[96px]" : "w-[122px]"} overflow-hidden rounded-xl border text-center text-xs transition ${
+        className={`group ${slotWidthClass} overflow-hidden rounded-xl border text-center text-xs transition ${
           type === "ban"
             ? "border-red-200/45 bg-red-500/20 text-red-50 hover:bg-red-500/30"
             : highlightImmuneSlot
@@ -1303,8 +1304,8 @@ export default function RoomPage() {
           })}
         </div>
         <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-white/55">Піки</p>
-        <div className="mt-1 flex justify-center">
-          <div className="grid grid-cols-[repeat(4,max-content)] gap-1">
+        <div className="mt-1 overflow-x-auto">
+          <div className="mx-auto grid w-max grid-cols-2 gap-1 sm:grid-cols-4">
             {Array.from({ length: pickSlotCount }, (_, slotIndex) => {
               const item = pickSlots[slotIndex];
               const pickOrderNumber = pickOrderNumbers[slotIndex];
@@ -1330,7 +1331,7 @@ export default function RoomPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,_rgba(56,189,248,0.16),_transparent_32%),radial-gradient(circle_at_90%_6%,_rgba(167,139,250,0.18),_transparent_34%),linear-gradient(to_bottom,_#070b14,_#0b1222,_#0a1020)] px-4 py-8 text-white sm:px-6 xl:px-10">
+    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_10%_0%,_rgba(56,189,248,0.16),_transparent_32%),radial-gradient(circle_at_90%_6%,_rgba(167,139,250,0.18),_transparent_34%),linear-gradient(to_bottom,_#070b14,_#0b1222,_#0a1020)] px-4 py-8 text-white sm:px-6 xl:px-10">
       <section className="mx-auto w-full max-w-[1800px] rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_90px_rgba(3,7,18,0.55)] backdrop-blur md:p-7 xl:p-8">
         <p className="text-sm uppercase tracking-[0.22em] text-violet-200/80">Кімната</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -1503,7 +1504,7 @@ export default function RoomPage() {
                       <div className="mt-4">
                         <p className="text-center text-xs uppercase tracking-[0.12em] text-white/55">Піки</p>
                         <div className="mt-2">
-                          <div className="grid grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             {Array.from({ length: pickLimit }, (_, index) => (
                               <div key={`single-pick-${index}`} className="grid content-start justify-items-center gap-2">
                                 {renderSlot(draft.picks[index], `PICK ${index + 1}`, "pick", index)}
