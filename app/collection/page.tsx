@@ -336,15 +336,30 @@ export default function CollectionPage() {
             className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none placeholder:text-white/40"
           />
 
-          <select
-            value={rarityFilter}
-            onChange={(e) => setRarityFilter(e.target.value)}
-            className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none"
-          >
-            <option className="bg-slate-900 text-white" value="all">Усі зірки</option>
-            <option className="bg-slate-900 text-white" value="5">5★</option>
-            <option className="bg-slate-900 text-white" value="4">4★</option>
-          </select>
+          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 py-2">
+            <button
+              type="button"
+              onClick={() => setRarityFilter((prev) => (prev === "5" ? "all" : "5"))}
+              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                rarityFilter === "5"
+                  ? "border-yellow-300/40 bg-yellow-400/20 text-yellow-100"
+                  : "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
+              }`}
+            >
+              5★
+            </button>
+            <button
+              type="button"
+              onClick={() => setRarityFilter((prev) => (prev === "4" ? "all" : "4"))}
+              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                rarityFilter === "4"
+                  ? "border-violet-300/45 bg-violet-500/25 text-violet-100"
+                  : "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
+              }`}
+            >
+              4★
+            </button>
+          </div>
 
           <select
             value={elementFilter}
