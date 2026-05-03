@@ -288,9 +288,9 @@ export default function CollectionPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(118,136,214,0.16),_transparent_30%),linear-gradient(to_bottom,_#070a14,_#0b1324,_#090f1f)] px-6 py-10 text-white md:bg-[radial-gradient(circle_at_top,_rgba(168,188,255,0.29),_transparent_30%),linear-gradient(to_bottom,_#09090f,_#111827,_#0b1020)]">
+    <main className="min-h-screen bg-[radial-gradient(52%_58%_at_92%_16%,rgba(133,95,255,0.28)_0%,rgba(94,52,213,0.14)_44%,transparent_74%),radial-gradient(86%_66%_at_14%_2%,#0f607f_0%,#062149_46%,#040b25_100%),radial-gradient(72%_42%_at_50%_108%,rgba(255,98,174,0.34)_0%,rgba(170,40,120,0.18)_32%,transparent_70%)] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 shadow-[0_20px_45px_rgba(2,8,23,0.42)] backdrop-blur-md md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-violet-200/80">Genshin Pickban</p>
             <h1 className="mt-2 text-3xl font-bold md:text-4xl">Мої персонажі</h1>
@@ -327,7 +327,7 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 shadow-lg backdrop-blur lg:grid-cols-5">
+        <div className="mb-6 grid gap-4 rounded-3xl border border-white/10 bg-slate-900/35 p-4 shadow-[0_14px_35px_rgba(2,8,23,0.3)] backdrop-blur-md lg:grid-cols-5">
           <input
             type="text"
             placeholder="Пошук по імені..."
@@ -399,7 +399,7 @@ export default function CollectionPage() {
         ) : filteredCharacters.length === 0 ? (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-white/70">
             {characters.length === 0
-              ? "У базі поки немає персонажів або доступ до таблиці обмежений."
+              ? "Треба увійти, щоб тут з'явилися персонажі."
               : "Нічого не знайдено. Спробуйте змінити фільтри."}
           </div>
         ) : (
@@ -415,8 +415,8 @@ export default function CollectionPage() {
                   disabled={savingSlug === character.slug}
                   className={`group rounded-3xl border p-5 text-left shadow-lg transition ${
                     isSelected
-                      ? "border-violet-300/50 bg-violet-400/10 ring-1 ring-violet-300/30"
-                      : "border-white/10 bg-white/5 hover:bg-white/8"
+                      ? "border-violet-300/50 bg-violet-500/12 ring-1 ring-violet-300/30"
+                      : "border-white/10 bg-slate-900/35 hover:bg-slate-800/50"
                   } ${savingSlug === character.slug ? "cursor-not-allowed opacity-80" : ""}`}
                 >
                   <div className="flex items-start gap-4">
