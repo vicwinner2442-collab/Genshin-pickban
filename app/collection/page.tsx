@@ -288,7 +288,7 @@ export default function CollectionPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(52%_58%_at_92%_16%,rgba(133,95,255,0.28)_0%,rgba(94,52,213,0.14)_44%,transparent_74%),radial-gradient(86%_66%_at_14%_2%,#3A015C_0%,#062149_46%,#040b25_100%),radial-gradient(72%_42%_at_50%_108%,rgba(255,98,174,0.34)_0%,rgba(170,40,120,0.18)_32%,transparent_70%)] px-6 py-10 text-white">
+    <main className="min-h-screen bg-[#040B25] px-6 py-10 text-white">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 shadow-[0_20px_45px_rgba(2,8,23,0.42)] backdrop-blur-md md:flex-row md:items-center md:justify-between">
           <div>
