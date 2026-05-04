@@ -1051,7 +1051,7 @@ export default function RoomPage() {
           <div className="mt-4 flex flex-wrap gap-1">
             {ownedCharacters.length === 0 ? (
               <div className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-4 text-center text-xs text-white/55">
-                Колекція порожня
+                Список персонажів порожній
               </div>
             ) : (
               ownedCharacters.map((item) => {
@@ -1212,7 +1212,7 @@ export default function RoomPage() {
         <div className="mt-1 flex flex-wrap gap-1">
           {ownedCharacters.length === 0 ? (
             <div className="col-span-full rounded-xl border border-white/10 bg-black/20 px-3 py-4 text-center text-xs text-white/55">
-              Колекція порожня
+              Список персонажів порожній
             </div>
           ) : (
             ownedCharacters.map((item) => {

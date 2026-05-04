@@ -120,7 +120,7 @@ export default function CollectionPage() {
   const [message, setMessage] = useState("");
 
   const [search, setSearch] = useState("");
-  const [rarityFilter, setRarityFilter] = useState("all");
+  const [rarityFilters, setRarityFilters] = useState<Array<"4" | "5">>([]);
   const [elementFilter, setElementFilter] = useState("all");
   const [weaponFilter, setWeaponFilter] = useState("all");
 
@@ -182,13 +182,14 @@ export default function CollectionPage() {
   const filteredCharacters = useMemo(() => {
     return characters.filter((character) => {
       const matchesSearch = character.name.toLowerCase().includes(search.toLowerCase());
-      const matchesRarity = rarityFilter === "all" || String(character.rarity) === rarityFilter;
+      const matchesRarity =
+        rarityFilters.length === 0 || (character.rarity !== null && rarityFilters.includes(String(character.rarity) as "4" | "5"));
       const matchesElement = elementFilter === "all" || getLocalizedElement(character.element) === elementFilter;
       const matchesWeapon = weaponFilter === "all" || getLocalizedWeapon(character.weapon_type) === weaponFilter;
 
       return matchesSearch && matchesRarity && matchesElement && matchesWeapon;
     });
-  }, [characters, search, rarityFilter, elementFilter, weaponFilter]);
+  }, [characters, search, rarityFilters, elementFilter, weaponFilter]);
 
   const toggleCharacter = async (slug: string) => {
     const {
@@ -275,7 +276,7 @@ export default function CollectionPage() {
 
   const clearFilters = () => {
     setSearch("");
-    setRarityFilter("all");
+    setRarityFilters([]);
     setElementFilter("all");
     setWeaponFilter("all");
   };
@@ -295,7 +296,7 @@ export default function CollectionPage() {
             <p className="text-sm uppercase tracking-[0.24em] text-violet-200/80">Genshin Pickban</p>
             <h1 className="mt-2 text-3xl font-bold md:text-4xl">Мої персонажі</h1>
             <p className="mt-3 max-w-2xl text-sm text-white/70 md:text-base">
-              Обирайте персонажів, які у вас є. Саме ця колекція потім використовується у кімнатах драфту.
+              Обирайте персонажів, які у вас є. Саме цей список персонажів потім використовується у кімнатах драфту.
             </p>
           </div>
 
@@ -327,34 +328,38 @@ export default function CollectionPage() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-4 rounded-3xl border border-white/10 bg-slate-900/35 p-4 shadow-[0_14px_35px_rgba(2,8,23,0.3)] backdrop-blur-md lg:grid-cols-5">
+        <div className="mb-6 grid gap-4 rounded-3xl border border-white/10 bg-slate-900/35 p-4 shadow-[0_14px_35px_rgba(2,8,23,0.3)] backdrop-blur-md lg:grid-cols-12">
           <input
             type="text"
             placeholder="Пошук по імені..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none placeholder:text-white/40"
+            className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none placeholder:text-white/40 lg:col-span-3"
           />
 
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 py-2">
+          <div className="grid h-14 grid-cols-2 gap-2 lg:col-span-2">
             <button
               type="button"
-              onClick={() => setRarityFilter((prev) => (prev === "5" ? "all" : "5"))}
-              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                rarityFilter === "5"
+              onClick={() =>
+                setRarityFilters((prev) => (prev.includes("5") ? prev.filter((value) => value !== "5") : [...prev, "5"]))
+              }
+              className={`h-14 rounded-2xl border px-3 text-sm font-semibold transition ${
+                rarityFilters.includes("5")
                   ? "border-yellow-300/40 bg-yellow-400/20 text-yellow-100"
-                  : "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
+                  : "border-white/10 bg-white/10 text-white/75 hover:bg-white/15"
               }`}
             >
               5★
             </button>
             <button
               type="button"
-              onClick={() => setRarityFilter((prev) => (prev === "4" ? "all" : "4"))}
-              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                rarityFilter === "4"
+              onClick={() =>
+                setRarityFilters((prev) => (prev.includes("4") ? prev.filter((value) => value !== "4") : [...prev, "4"]))
+              }
+              className={`h-14 rounded-2xl border px-3 text-sm font-semibold transition ${
+                rarityFilters.includes("4")
                   ? "border-violet-300/45 bg-violet-500/25 text-violet-100"
-                  : "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
+                  : "border-white/10 bg-white/10 text-white/75 hover:bg-white/15"
               }`}
             >
               4★
@@ -364,7 +369,7 @@ export default function CollectionPage() {
           <select
             value={elementFilter}
             onChange={(e) => setElementFilter(e.target.value)}
-            className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none"
+            className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none lg:col-span-2"
           >
             <option className="bg-slate-900 text-white" value="all">Усі елементи</option>
             {ELEMENTS.map((element) => (
@@ -377,7 +382,7 @@ export default function CollectionPage() {
           <select
             value={weaponFilter}
             onChange={(e) => setWeaponFilter(e.target.value)}
-            className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none"
+            className="h-14 rounded-2xl border border-white/10 bg-white/10 px-4 text-white outline-none lg:col-span-2"
           >
             <option className="bg-slate-900 text-white" value="all">Уся зброя</option>
             {WEAPONS.map((weapon) => (
@@ -387,7 +392,10 @@ export default function CollectionPage() {
             ))}
           </select>
 
-          <button onClick={clearFilters} className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 font-medium hover:bg-white/15">
+          <button
+            onClick={clearFilters}
+            className="h-14 rounded-2xl border border-white/15 bg-white/10 px-4 font-medium hover:bg-white/15 lg:col-span-3"
+          >
             Скинути фільтри
           </button>
         </div>

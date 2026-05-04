@@ -60,7 +60,7 @@ export default function AuthPage() {
         );
       }
 
-      setMessage("Успішний вхід. Тепер можеш перейти в колекцію.");
+      setMessage("Успішний вхід. Тепер можеш перейти в мій список персонажів.");
       setLoading(false);
       return;
     }
