@@ -1,5 +1,10 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
+import { Rubik } from "next/font/google";
 import "./globals.css";
+
+const rubik = Rubik({
+  subsets: ["latin", "cyrillic"],
+});
 
 export const metadata: Metadata = {
   title: "Genshin Pickban",
@@ -26,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uk">
+    <html lang="uk" className={rubik.className}>
       <body>{children}</body>
     </html>
   );
