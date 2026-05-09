@@ -14,6 +14,8 @@ type DraftPhase = "immunity" | "ban" | "pick" | "done";
 const IMMUNE_PICK_SLOT_INDEXES = [3, 7] as const;
 const DUAL_ROSTER_PICK_STEP_COUNTS = [1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1] as const;
 const SINGLE_ROSTER_PICK_TURNS: TurnRole[] = ["guest", "host", "host", "guest", "guest", "host", "guest", "host"];
+const ELEMENTS = ["Піро", "Гідро", "Кріо", "Електро", "Анемо", "Гео", "Дендро"] as const;
+const RARITIES = ["5", "4"] as const;
 
 const DUAL_ROSTER_PICK_TURNS: Array<{ role: TurnRole; count: number }> = [
   { role: "host", count: 1 },
@@ -64,14 +66,24 @@ type UserCharacter = {
 type CharacterName = {
   slug: string;
   name: string;
+  element: string | null;
+  rarity: number | null;
   image_path: string | null;
 };
 
 type PlayerCharacter = {
   slug: string;
   name: string;
+  element: string | null;
+  rarity: number | null;
   constellation: number;
   imagePath: string | null;
+};
+
+type RosterFilters = {
+  search: string;
+  element: string;
+  rarity: string;
 };
 
 type DraftSelection = {
@@ -108,6 +120,29 @@ const EMPTY_DRAFT: DraftState = {
   picks: [],
 };
 
+const EMPTY_ROSTER_FILTERS: RosterFilters = {
+  search: "",
+  element: "all",
+  rarity: "all",
+};
+
+const ELEMENT_LABELS: Record<string, (typeof ELEMENTS)[number]> = {
+  Pyro: "Піро",
+  "Піро": "Піро",
+  Hydro: "Гідро",
+  "Гідро": "Гідро",
+  Cryo: "Кріо",
+  "Кріо": "Кріо",
+  Electro: "Електро",
+  "Електро": "Електро",
+  Anemo: "Анемо",
+  "Анемо": "Анемо",
+  Geo: "Гео",
+  "Гео": "Гео",
+  Dendro: "Дендро",
+  "Дендро": "Дендро",
+};
+
 function formatRoomError(error: { message: string; code?: string } | null) {
   if (!error) return "";
 
@@ -129,6 +164,11 @@ function formatRoomError(error: { message: string; code?: string } | null) {
 function getDisplayName(player: RoomPlayer | null) {
   if (!player) return "";
   return player.display_name?.trim() || player.user_id.slice(0, 8);
+}
+
+function getLocalizedElement(element: string | null) {
+  if (!element) return null;
+  return ELEMENT_LABELS[element] ?? element;
 }
 
 function normalizeDraftState(raw: unknown, immunityLimit: number, banLimit: number, pickLimit: number): DraftState {
@@ -223,6 +263,7 @@ export default function RoomPage() {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<RoomPlayer[]>([]);
   const [playerCharacters, setPlayerCharacters] = useState<Record<string, PlayerCharacter[]>>({});
+  const [rosterFiltersByPlayer, setRosterFiltersByPlayer] = useState<Record<string, RosterFilters>>({});
   const [loading, setLoading] = useState(true);
   const [savingDraft, setSavingDraft] = useState(false);
   const [message, setMessage] = useState("");
@@ -231,6 +272,37 @@ export default function RoomPage() {
   const autoTurnLockRef = useRef<string>("");
 
   const isHost = room?.host_user_id === userId;
+
+  const getRosterFilters = (playerId: string): RosterFilters => rosterFiltersByPlayer[playerId] ?? EMPTY_ROSTER_FILTERS;
+
+  const updateRosterFilters = (playerId: string, patch: Partial<RosterFilters>) => {
+    setRosterFiltersByPlayer((prev) => ({
+      ...prev,
+      [playerId]: {
+        ...(prev[playerId] ?? EMPTY_ROSTER_FILTERS),
+        ...patch,
+      },
+    }));
+  };
+
+  const clearRosterFilters = (playerId: string) => {
+    setRosterFiltersByPlayer((prev) => ({
+      ...prev,
+      [playerId]: EMPTY_ROSTER_FILTERS,
+    }));
+  };
+
+  const filterRosterCharacters = (characters: PlayerCharacter[], filters: RosterFilters) => {
+    const normalizedSearch = filters.search.trim().toLowerCase();
+
+    return characters.filter((character) => {
+      const matchesSearch = normalizedSearch.length === 0 || character.name.toLowerCase().includes(normalizedSearch);
+      const matchesElement = filters.element === "all" || getLocalizedElement(character.element) === filters.element;
+      const matchesRarity = filters.rarity === "all" || String(character.rarity ?? "") === filters.rarity;
+
+      return matchesSearch && matchesElement && matchesRarity;
+    });
+  };
 
   const draftMode: DraftMode = room?.draft_mode === "dual_roster" ? "dual_roster" : "single_roster";
   const immunityCount = draftMode === "dual_roster" ? 2 : 0;
@@ -778,7 +850,7 @@ export default function RoomPage() {
       let characterBySlug = new Map<string, CharacterName>();
 
       if (allSlugs.length > 0) {
-        const { data: chars } = await supabase.from("characters").select("slug, name, image_path").in("slug", allSlugs);
+        const { data: chars } = await supabase.from("characters").select("slug, name, element, rarity, image_path").in("slug", allSlugs);
         characterBySlug = new Map((chars ?? []).map((item: CharacterName) => [item.slug, item]));
       }
 
@@ -792,6 +864,8 @@ export default function RoomPage() {
         byUser[item.user_id].push({
           slug: item.character_slug,
           name: characterData?.name ?? item.character_slug,
+          element: characterData?.element ?? null,
+          rarity: characterData?.rarity ?? null,
           constellation: Number(item.constellation ?? 0),
           imagePath: characterData?.image_path ?? null,
         });
@@ -1016,6 +1090,64 @@ export default function RoomPage() {
     currentTurnKey,
   ]);
 
+  const renderRosterFilters = (playerId: string, compact = false) => {
+    const filters = getRosterFilters(playerId);
+    const hasFilters = filters.search.trim().length > 0 || filters.element !== "all" || filters.rarity !== "all";
+
+    return (
+      <div className={`grid gap-2 ${compact ? "grid-cols-[minmax(0,1fr)_88px_74px_36px]" : "grid-cols-[minmax(0,1fr)_120px_86px_40px]"}`}>
+        <input
+          type="text"
+          value={filters.search}
+          onChange={(event) => updateRosterFilters(playerId, { search: event.target.value })}
+          placeholder="Пошук"
+          aria-label="Пошук персонажа за іменем"
+          className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none placeholder:text-white/35`}
+        />
+        <select
+          value={filters.element}
+          onChange={(event) => updateRosterFilters(playerId, { element: event.target.value })}
+          aria-label="Фільтр за елементом"
+          className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none`}
+        >
+          <option className="bg-slate-900 text-white" value="all">
+            Елемент
+          </option>
+          {ELEMENTS.map((element) => (
+            <option className="bg-slate-900 text-white" key={element} value={element}>
+              {element}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filters.rarity}
+          onChange={(event) => updateRosterFilters(playerId, { rarity: event.target.value })}
+          aria-label="Фільтр за рідкістю"
+          className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none`}
+        >
+          <option className="bg-slate-900 text-white" value="all">
+            ★
+          </option>
+          {RARITIES.map((rarity) => (
+            <option className="bg-slate-900 text-white" key={rarity} value={rarity}>
+              {rarity}★
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => clearRosterFilters(playerId)}
+          disabled={!hasFilters}
+          title="Скинути фільтри"
+          aria-label="Скинути фільтри ростеру"
+          className={`${compact ? "h-9 w-9" : "h-10 w-10"} rounded-lg border border-white/15 bg-white/10 text-base font-semibold text-white/80 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40`}
+        >
+          ↺
+        </button>
+      </div>
+    );
+  };
+
   const renderPlayerPanel = (player: RoomPlayer | null, label: string, showRoster: boolean) => {
     if (!player) {
       return (
@@ -1030,6 +1162,7 @@ export default function RoomPage() {
     const isActiveSource = phase !== "done" && !waitingForReady && player.user_id === activeSourceUserId;
     const displayName = self ? "Ти" : getDisplayName(player);
     const ownedCharacters = showRoster ? playerCharacters[player.user_id] ?? [] : [];
+    const filteredCharacters = filterRosterCharacters(ownedCharacters, getRosterFilters(player.user_id));
 
     return (
       <div
@@ -1048,13 +1181,22 @@ export default function RoomPage() {
             Обери ростер для драфту в центрі.
           </div>
         ) : (
-          <div className="mt-4 flex flex-wrap gap-1">
+          <div className="mt-4">
+            {renderRosterFilters(player.user_id)}
+            <div className="mt-2 text-[10px] text-white/45">
+              Показано: {filteredCharacters.length}/{ownedCharacters.length}
+            </div>
+          <div className="mt-2 flex flex-wrap gap-1">
             {ownedCharacters.length === 0 ? (
               <div className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-4 text-center text-xs text-white/55">
                 Список персонажів порожній
               </div>
+            ) : filteredCharacters.length === 0 ? (
+              <div className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-4 text-center text-xs text-white/55">
+                Нічого не знайдено
+              </div>
             ) : (
-              ownedCharacters.map((item) => {
+              filteredCharacters.map((item) => {
                 const isImmuneCharacter = immunitySlugs.has(item.slug);
                 const isUsed = usedCharacterSlugs.has(item.slug) && !isImmuneCharacter;
                 const isImmuneAlreadyChosen = draft.immunities.some((selection) => selection.character_slug === item.slug);
@@ -1103,6 +1245,7 @@ export default function RoomPage() {
                 );
               })
             )}
+          </div>
           </div>
         )}
       </div>
@@ -1193,6 +1336,7 @@ export default function RoomPage() {
 
     const displayName = getDisplayName(player) || "Гравець";
     const ownedCharacters = playerCharacters[player.user_id] ?? [];
+    const filteredCharacters = filterRosterCharacters(ownedCharacters, getRosterFilters(player.user_id));
 
     return (
       <div
@@ -1209,13 +1353,24 @@ export default function RoomPage() {
           <span className="text-[11px] uppercase tracking-[0.14em] text-white/45">{rosterLabel}</span>
         </div>
 
-        <div className="mt-1 flex flex-wrap gap-1">
+        <div className="mt-3">
+          {renderRosterFilters(player.user_id, true)}
+          <div className="mt-2 text-[10px] text-white/45">
+            Показано: {filteredCharacters.length}/{ownedCharacters.length}
+          </div>
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-1">
           {ownedCharacters.length === 0 ? (
             <div className="col-span-full rounded-xl border border-white/10 bg-black/20 px-3 py-4 text-center text-xs text-white/55">
               Список персонажів порожній
             </div>
+          ) : filteredCharacters.length === 0 ? (
+            <div className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-4 text-center text-xs text-white/55">
+              Нічого не знайдено
+            </div>
           ) : (
-            ownedCharacters.map((item) => {
+            filteredCharacters.map((item) => {
               const isImmuneCharacter = immunitySlugs.has(item.slug);
               const isUsed = usedCharacterSlugs.has(item.slug) && !isImmuneCharacter;
               const isImmuneAlreadyChosen = draft.immunities.some((selection) => selection.character_slug === item.slug);
