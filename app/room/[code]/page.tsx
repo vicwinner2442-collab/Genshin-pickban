@@ -1341,6 +1341,8 @@ export default function RoomPage() {
   ) => {
     const slotSizeClass = compact ? "h-[84px] w-[74px] sm:h-[102px] sm:w-[96px]" : "h-[104px] w-[82px] sm:h-[124px] sm:w-[122px]";
     const imageHeightClass = compact ? "h-[58px] sm:h-[76px]" : "h-[72px] sm:h-24";
+    const selectedImageHeightClass = compact ? "h-[48px] sm:h-[62px]" : "h-[62px] sm:h-[82px]";
+    const selectedFooterClass = compact ? "h-9 text-[9px]" : "h-10 text-[10px]";
     const slotWidthClass = compact ? "w-[74px] sm:w-[96px]" : "w-[82px] sm:w-[122px]";
 
     if (!selection) {
@@ -1378,7 +1380,7 @@ export default function RoomPage() {
         }`}
       >
         <div className={`flex ${slotSizeClass} flex-col`}>
-          <div className={`relative ${imageHeightClass} w-full overflow-hidden`}>
+          <div className={`${selectedImageHeightClass} w-full overflow-hidden`}>
             {selection.image_path ? (
               <Image
                 src={getCharacterImageUrl(selection.image_path)}
@@ -1391,14 +1393,14 @@ export default function RoomPage() {
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-black/30 text-[10px] text-white/70">?</div>
             )}
-            <div className="absolute inset-x-1 bottom-1 truncate rounded-md border border-white/10 bg-black/70 px-1.5 py-0.5 text-[9px] font-medium text-white/90 backdrop-blur">
-              Обрав(-ла): {actorName}
-            </div>
           </div>
           <div
-            className={`flex ${compact ? "h-6 text-[10px]" : "h-7 text-[11px]"} items-center justify-center border-t border-white/15 bg-black/55 px-2 text-center font-semibold tracking-wide`}
+            className={`flex ${selectedFooterClass} flex-col items-center justify-center border-t border-white/15 bg-black/65 px-1 text-center font-semibold leading-tight tracking-wide`}
           >
-            {pickOrderNumber ? `#${pickOrderNumber} · ` : ""}C{selection.constellation}
+            <span>{pickOrderNumber ? `#${pickOrderNumber} · ` : ""}C{selection.constellation}</span>
+            <span className="mt-0.5 max-w-full truncate text-[8px] font-medium tracking-normal text-white/70 sm:text-[9px]">
+              Обрав(-ла): {actorName}
+            </span>
           </div>
         </div>
       </button>
