@@ -233,6 +233,28 @@ function getSingleRosterPickRole(picksCount: number): TurnRole {
   return picksCount % 2 === 0 ? "host" : "guest";
 }
 
+function getSingleRosterPickTurnState(picksCount: number, pickLimit: number) {
+  if (picksCount >= pickLimit) return null;
+
+  const role = getSingleRosterPickRole(picksCount);
+  let stepStart = picksCount;
+  let stepEnd = picksCount + 1;
+
+  while (stepStart > 0 && getSingleRosterPickRole(stepStart - 1) === role) {
+    stepStart -= 1;
+  }
+
+  while (stepEnd < pickLimit && getSingleRosterPickRole(stepEnd) === role) {
+    stepEnd += 1;
+  }
+
+  return {
+    role,
+    count: stepEnd - stepStart,
+    stepStart,
+  };
+}
+
 function getDualRosterPickTurnState(picksCount: number, turns: Array<{ role: TurnRole; count: number }>) {
   let consumedPicks = 0;
 
@@ -375,6 +397,11 @@ export default function RoomPage() {
       ? "pick"
       : "done";
 
+  const singlePickTurnState = useMemo(() => {
+    if (draftMode !== "single_roster" || phase !== "pick") return null;
+    return getSingleRosterPickTurnState(draft.picks.length, pickLimit);
+  }, [draftMode, phase, draft.picks.length, pickLimit]);
+
   const dualPickTurnState = useMemo(() => {
     if (draftMode !== "dual_roster" || phase !== "pick") return null;
     return getDualRosterPickTurnState(draft.picks.length, dualRosterPickTurns);
@@ -399,7 +426,7 @@ export default function RoomPage() {
       return dualPickTurnState?.role ?? null;
     }
 
-    return getSingleRosterPickRole(draft.picks.length);
+    return singlePickTurnState?.role ?? getSingleRosterPickRole(draft.picks.length);
   }, [
     phase,
     hasGuest,
@@ -408,6 +435,7 @@ export default function RoomPage() {
     draft.picks.length,
     draftMode,
     dualPickTurnState,
+    singlePickTurnState,
     firstTurnRole,
     oppositeTurnRole,
   ]);
@@ -494,6 +522,16 @@ export default function RoomPage() {
     if (phase !== "pick" || draftMode !== "dual_roster" || nextLocalPickIndex === null) return false;
     return IMMUNE_PICK_SLOT_INDEXES.includes(nextLocalPickIndex as (typeof IMMUNE_PICK_SLOT_INDEXES)[number]);
   }, [phase, draftMode, nextLocalPickIndex]);
+
+  const dualPickStepRemaining = useMemo(() => {
+    if (!dualPickTurnState) return 0;
+    return Math.max(dualPickTurnState.count - (draft.picks.length - dualPickTurnState.stepStart), 0);
+  }, [dualPickTurnState, draft.picks.length]);
+
+  const singlePickStepRemaining = useMemo(() => {
+    if (!singlePickTurnState) return 0;
+    return Math.max(singlePickTurnState.count - (draft.picks.length - singlePickTurnState.stepStart), 0);
+  }, [singlePickTurnState, draft.picks.length]);
 
   const selectedSingleRosterUserId = useMemo(() => {
     if (draftMode !== "single_roster") return null;
@@ -986,18 +1024,51 @@ export default function RoomPage() {
     setMessage("Код скопійовано.");
   };
 
-  const turnText = useMemo(() => {
+  const currentStepText = useMemo(() => {
+    if (waitingForReady) return "Очікуємо готовність";
     if (phase === "done") return "Драфт завершено";
-    if (!turnRole) return "Очікування";
-    const phasePrefix =
-      phase === "immunity" ? "Імун: " : phase === "ban" ? "Бан: " : phase === "pick" ? "Пік: " : "";
+    if (!turnRole) return "Очікування гравців";
 
-    if (turnRole === "host") {
-      return `${phasePrefix}${getDisplayName(hostPlayer) || "невідомий"} ходить`;
+    const actorName =
+      turnRole === "host" ? getDisplayName(hostPlayer) || "Гравець 1" : getDisplayName(guestPlayer) || "Гравець 2";
+
+    if (phase === "immunity") {
+      return `Імунітет ${draft.immunities.length + 1}/${immunityCount}: ${actorName} ходить`;
     }
 
-    return `${phasePrefix}${getDisplayName(guestPlayer) || "невідомий"} ходить`;
-  }, [phase, turnRole, hostPlayer, guestPlayer]);
+    if (phase === "ban") {
+      return `Бан ${draft.bans.length + 1}/${banLimit}: ${actorName} ходить`;
+    }
+
+    const dualPickCountHint =
+      draftMode === "dual_roster" && dualPickTurnState && dualPickTurnState.count > 1
+        ? ` · обери ${dualPickStepRemaining}/${dualPickTurnState.count}`
+        : "";
+    const singlePickCountHint =
+      draftMode === "single_roster" && singlePickTurnState && singlePickTurnState.count > 1
+        ? ` · обери ${singlePickStepRemaining}/${singlePickTurnState.count}`
+        : "";
+    const immuneSlotHint = draftMode === "dual_roster" && isCurrentPickImmuneSlot ? " · імун-слот" : "";
+    return `Пік ${draft.picks.length + 1}/${pickLimit}: ${actorName} ходить${dualPickCountHint}${singlePickCountHint}${immuneSlotHint}`;
+  }, [
+    waitingForReady,
+    phase,
+    turnRole,
+    hostPlayer,
+    guestPlayer,
+    draft.immunities.length,
+    immunityCount,
+    draft.bans.length,
+    banLimit,
+    draftMode,
+    dualPickTurnState,
+    dualPickStepRemaining,
+    singlePickTurnState,
+    singlePickStepRemaining,
+    isCurrentPickImmuneSlot,
+    draft.picks.length,
+    pickLimit,
+  ]);
 
   const turnSecondsForCurrentPhase = useMemo(() => {
     const configured = room?.turn_timer_seconds ?? 0;
@@ -1260,7 +1331,8 @@ export default function RoomPage() {
     compact = false,
     pickOrderNumber?: number,
     highlightImmuneSlot = false,
-    removeType: "immunity" | "ban" | "pick" = type
+    removeType: "immunity" | "ban" | "pick" = type,
+    highlightActive = false
   ) => {
     const slotSizeClass = compact ? "h-[84px] w-[74px] sm:h-[102px] sm:w-[96px]" : "h-[104px] w-[82px] sm:h-[124px] sm:w-[122px]";
     const imageHeightClass = compact ? "h-[58px] sm:h-[76px]" : "h-[72px] sm:h-24";
@@ -1268,7 +1340,9 @@ export default function RoomPage() {
 
     if (!selection) {
       const emptySlotTone =
-        type === "ban"
+        highlightActive
+          ? "border-emerald-200/90 bg-emerald-400/18 text-emerald-50 shadow-[0_0_0_1px_rgba(110,231,183,0.6),0_0_24px_rgba(16,185,129,0.26)]"
+        : type === "ban"
           ? "border-red-300/35 bg-red-500/12 text-red-100"
           : highlightImmuneSlot
           ? "border-cyan-300/55 bg-cyan-500/15 text-cyan-100"
@@ -1287,7 +1361,9 @@ export default function RoomPage() {
         type="button"
         onClick={() => void removeSelectionAt(removeType, index)}
         className={`group ${slotWidthClass} overflow-hidden rounded-xl border text-center text-xs transition ${
-          type === "ban"
+          highlightActive
+            ? "border-emerald-200/90 bg-emerald-400/22 text-emerald-50 shadow-[0_0_0_1px_rgba(110,231,183,0.6),0_0_24px_rgba(16,185,129,0.26)] hover:bg-emerald-400/30"
+          : type === "ban"
             ? "border-red-200/45 bg-red-500/20 text-red-50 hover:bg-red-500/30"
             : highlightImmuneSlot
             ? "border-cyan-200/70 bg-cyan-400/35 text-cyan-50 hover:bg-cyan-400/45"
@@ -1431,8 +1507,18 @@ export default function RoomPage() {
     pickSlots: IndexedDraftSelection[],
     pickSlotCount: number,
     pickOrderNumbers: number[],
-    keyPrefix: string
+    keyPrefix: TurnRole
   ) => {
+    const isActorQuarter = turnRole === keyPrefix;
+    const isBanTargetQuarter =
+      phase === "ban" &&
+      !waitingForReady &&
+      turnRole &&
+      ((turnRole === "host" && keyPrefix === "guest") || (turnRole === "guest" && keyPrefix === "host"));
+    const activeBanSlotIndex = isBanTargetQuarter ? banSlots.length : -1;
+    const activePickStart = phase === "pick" && !waitingForReady && isActorQuarter && nextLocalPickIndex !== null ? nextLocalPickIndex : -1;
+    const activePickEnd = activePickStart >= 0 ? activePickStart + Math.max(dualPickStepRemaining, 1) : -1;
+
     return (
       <div className="rounded-xl border border-white/10 bg-black/25 p-3">
         <p className="text-sm font-semibold text-white/85">{title}</p>
@@ -1442,7 +1528,17 @@ export default function RoomPage() {
             const item = immunitySlots[slotIndex];
             return (
               <div key={`${keyPrefix}-immunity-${slotIndex}`}>
-                {renderSlot(item?.selection, `IMMUNE ${slotIndex + 1}`, "pick", item?.index ?? -1, true, undefined, true, "immunity")}
+                {renderSlot(
+                  item?.selection,
+                  `IMMUNE ${slotIndex + 1}`,
+                  "pick",
+                  item?.index ?? -1,
+                  true,
+                  undefined,
+                  true,
+                  "immunity",
+                  phase === "immunity" && isActorQuarter && slotIndex === immunitySlots.length
+                )}
               </div>
             );
           })}
@@ -1453,7 +1549,7 @@ export default function RoomPage() {
             const item = banSlots[slotIndex];
             return (
               <div key={`${keyPrefix}-ban-${slotIndex}`}>
-                {renderSlot(item?.selection, `BAN ${slotIndex + 1}`, "ban", item?.index ?? -1, true)}
+                {renderSlot(item?.selection, `BAN ${slotIndex + 1}`, "ban", item?.index ?? -1, true, undefined, false, "ban", slotIndex === activeBanSlotIndex)}
               </div>
             );
           })}
@@ -1474,7 +1570,9 @@ export default function RoomPage() {
                     item?.index ?? -1,
                     true,
                     pickOrderNumber,
-                    isImmuneSlot
+                    isImmuneSlot,
+                    "pick",
+                    slotIndex >= activePickStart && slotIndex < activePickEnd
                   )}
                 </div>
               );
@@ -1488,16 +1586,27 @@ export default function RoomPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_10%_0%,_rgba(56,189,248,0.16),_transparent_32%),radial-gradient(circle_at_90%_6%,_rgba(167,139,250,0.18),_transparent_34%),linear-gradient(to_bottom,_#070b14,_#0b1222,_#0a1020)] px-4 py-8 text-white sm:px-6 xl:px-10">
       <section className="mx-auto w-full max-w-[1800px] rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_90px_rgba(3,7,18,0.55)] backdrop-blur md:p-7 xl:p-8">
-        <p className="text-sm uppercase tracking-[0.22em] text-violet-200/80">Кімната</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold md:text-3xl">Код: {roomCode || "—"}</h1>
-          <button
-            type="button"
-            onClick={copyCode}
-            className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm hover:bg-white/15"
-          >
-            Скопіювати код
-          </button>
+        <div className="relative min-h-[126px] md:min-h-[112px]">
+          <div>
+            <p className="text-sm uppercase tracking-[0.22em] text-violet-200/80">Кімната</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold md:text-3xl">Код: {roomCode || "—"}</h1>
+              <button
+                type="button"
+                onClick={copyCode}
+                className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm hover:bg-white/15"
+              >
+                Скопіювати код
+              </button>
+            </div>
+          </div>
+
+          {!loading && room && (
+            <div className="mt-6 px-1 py-2 text-center md:absolute md:left-1/2 md:top-0 md:mt-0 md:w-[min(720px,48vw)] md:-translate-x-1/2">
+              <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/65">Поточний крок</p>
+              <p className="mt-1 text-2xl font-medium leading-tight text-white sm:text-3xl lg:text-4xl">{currentStepText}</p>
+            </div>
+          )}
         </div>
 
         {!loading && room && (
@@ -1513,7 +1622,6 @@ export default function RoomPage() {
                   {isCurrentUserReady ? "Ти готовий" : "ГОТОВИЙ"}
                 </button>
               )}
-              <span className="rounded-lg border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/80">{turnText}</span>
               <span className="rounded-lg border border-amber-300/25 bg-amber-400/10 px-3 py-1 text-xs text-amber-100">
                 Таймер ходу: {turnTimerText}
               </span>
@@ -1652,7 +1760,19 @@ export default function RoomPage() {
                       <p className="text-center text-xs uppercase tracking-[0.12em] text-white/55">Бани</p>
                       <div className="mt-2 grid grid-cols-2 justify-items-center gap-2">
                         {Array.from({ length: banLimit }, (_, index) => (
-                          <div key={`single-ban-${index}`}>{renderSlot(draft.bans[index], `BAN ${index + 1}`, "ban", index)}</div>
+                          <div key={`single-ban-${index}`}>
+                            {renderSlot(
+                              draft.bans[index],
+                              `BAN ${index + 1}`,
+                              "ban",
+                              index,
+                              false,
+                              undefined,
+                              false,
+                              "ban",
+                              phase === "ban" && !waitingForReady && index === draft.bans.length
+                            )}
+                          </div>
                         ))}
                       </div>
 
@@ -1660,11 +1780,27 @@ export default function RoomPage() {
                         <p className="text-center text-xs uppercase tracking-[0.12em] text-white/55">Піки</p>
                         <div className="mt-2">
                           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                            {Array.from({ length: pickLimit }, (_, index) => (
-                              <div key={`single-pick-${index}`} className="grid content-start justify-items-center gap-2">
-                                {renderSlot(draft.picks[index], `PICK ${index + 1}`, "pick", index)}
-                              </div>
-                            ))}
+                            {Array.from({ length: pickLimit }, (_, index) => {
+                              const activePickStart = phase === "pick" && !waitingForReady ? draft.picks.length : -1;
+                              const activePickEnd =
+                                activePickStart >= 0 ? activePickStart + Math.max(singlePickStepRemaining, 1) : -1;
+
+                              return (
+                                <div key={`single-pick-${index}`} className="grid content-start justify-items-center gap-2">
+                                  {renderSlot(
+                                    draft.picks[index],
+                                    `PICK ${index + 1}`,
+                                    "pick",
+                                    index,
+                                    false,
+                                    undefined,
+                                    false,
+                                    "pick",
+                                    index >= activePickStart && index < activePickEnd
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
