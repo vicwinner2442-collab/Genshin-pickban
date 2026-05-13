@@ -1586,7 +1586,7 @@ export default function RoomPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_10%_0%,_rgba(56,189,248,0.16),_transparent_32%),radial-gradient(circle_at_90%_6%,_rgba(167,139,250,0.18),_transparent_34%),linear-gradient(to_bottom,_#070b14,_#0b1222,_#0a1020)] px-4 py-8 text-white sm:px-6 xl:px-10">
       <section className="mx-auto w-full max-w-[1800px] rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_90px_rgba(3,7,18,0.55)] backdrop-blur md:p-7 xl:p-8">
-        <div className="relative min-h-[126px] md:min-h-[112px]">
+        <div className="relative min-h-[108px] md:min-h-[92px]">
           <div>
             <p className="text-sm uppercase tracking-[0.22em] text-violet-200/80">Кімната</p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -1602,7 +1602,7 @@ export default function RoomPage() {
           </div>
 
           {!loading && room && (
-            <div className="mt-6 px-1 py-2 text-center md:absolute md:left-1/2 md:top-0 md:mt-0 md:w-[min(720px,48vw)] md:-translate-x-1/2">
+            <div className="mt-4 px-1 py-2 text-center md:absolute md:left-1/2 md:top-4 md:mt-0 md:w-[min(720px,48vw)] md:-translate-x-1/2">
               <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/65">Поточний крок</p>
               <p className="mt-1 text-2xl font-medium leading-tight text-white sm:text-3xl lg:text-4xl">{currentStepText}</p>
             </div>
@@ -1610,7 +1610,7 @@ export default function RoomPage() {
         </div>
 
         {!loading && room && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {timerEnabled && hasGuest && !bothPlayersReady && myRole !== "observer" && (
                 <button
@@ -1677,7 +1677,7 @@ export default function RoomPage() {
           </div>
         )}
 
-        <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4 md:p-5">
+        <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4 md:p-5">
 
           {loading ? (
             <p className="text-sm text-white/70">Завантаження кімнати...</p>
