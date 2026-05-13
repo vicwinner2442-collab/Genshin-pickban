@@ -352,6 +352,11 @@ export default function RoomPage() {
     [sortedPlayers, room]
   );
 
+  const getSelectionActorName = (selection: DraftSelection) => {
+    const actor = sortedPlayers.find((player) => player.user_id === selection.actor_user_id) ?? null;
+    return getDisplayName(actor) || selection.actor_user_id.slice(0, 8);
+  };
+
   const hasGuest = Boolean(guestPlayer);
   const timerEnabled = (room?.turn_timer_seconds ?? 0) > 0;
   const participantUserIds = useMemo(
@@ -1356,6 +1361,8 @@ export default function RoomPage() {
       );
     }
 
+    const actorName = getSelectionActorName(selection);
+
     return (
       <button
         type="button"
@@ -1371,18 +1378,23 @@ export default function RoomPage() {
         }`}
       >
         <div className={`flex ${slotSizeClass} flex-col`}>
-          {selection.image_path ? (
-            <Image
-              src={getCharacterImageUrl(selection.image_path)}
-              alt={selection.character_name}
-              width={122}
-              height={96}
-              className={`${imageHeightClass} w-full object-cover transition duration-200 group-hover:scale-[1.02]`}
-              unoptimized
-            />
-          ) : (
-            <div className={`flex ${imageHeightClass} w-full items-center justify-center bg-black/30 text-[10px] text-white/70`}>?</div>
-          )}
+          <div className={`relative ${imageHeightClass} w-full overflow-hidden`}>
+            {selection.image_path ? (
+              <Image
+                src={getCharacterImageUrl(selection.image_path)}
+                alt={selection.character_name}
+                width={122}
+                height={96}
+                className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-black/30 text-[10px] text-white/70">?</div>
+            )}
+            <div className="absolute inset-x-1 bottom-1 truncate rounded-md border border-white/10 bg-black/70 px-1.5 py-0.5 text-[9px] font-medium text-white/90 backdrop-blur">
+              Обрав(-ла): {actorName}
+            </div>
+          </div>
           <div
             className={`flex ${compact ? "h-6 text-[10px]" : "h-7 text-[11px]"} items-center justify-center border-t border-white/15 bg-black/55 px-2 text-center font-semibold tracking-wide`}
           >
