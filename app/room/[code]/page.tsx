@@ -16,6 +16,14 @@ const DUAL_ROSTER_PICK_STEP_COUNTS = [1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1] as con
 const SINGLE_ROSTER_PICK_TURNS: TurnRole[] = ["guest", "host", "host", "guest", "guest", "host", "guest", "host"];
 const ELEMENTS = ["Піро", "Гідро", "Кріо", "Електро", "Анемо", "Гео", "Дендро"] as const;
 const RARITIES = ["5", "4"] as const;
+const SORT_OPTIONS = [
+  { value: "level_desc", label: "Від більшого рівня до меншого" },
+  { value: "level_asc", label: "Від меншого рівня до більшого" },
+  { value: "constellation_desc", label: "Від більшої кількості сузір'їв" },
+  { value: "constellation_asc", label: "Від меншої кількості сузір'їв" },
+] as const;
+type SortOption = (typeof SORT_OPTIONS)[number]["value"];
+const DEFAULT_SORT: SortOption = "level_desc";
 
 const DUAL_ROSTER_PICK_TURNS: Array<{ role: TurnRole; count: number }> = [
   { role: "host", count: 1 },
@@ -61,6 +69,7 @@ type UserCharacter = {
   user_id: string;
   character_slug: string;
   constellation: number | null;
+  level: number | null;
 };
 
 type CharacterName = {
@@ -77,6 +86,7 @@ type PlayerCharacter = {
   element: string | null;
   rarity: number | null;
   constellation: number;
+  level: number;
   imagePath: string | null;
 };
 
@@ -84,6 +94,7 @@ type RosterFilters = {
   search: string;
   element: string;
   rarity: string;
+  sort: SortOption;
 };
 
 type DraftSelection = {
@@ -92,6 +103,7 @@ type DraftSelection = {
   character_slug: string;
   character_name: string;
   constellation: number;
+  level: number;
   image_path: string | null;
 };
 
@@ -124,6 +136,7 @@ const EMPTY_ROSTER_FILTERS: RosterFilters = {
   search: "",
   element: "all",
   rarity: "all",
+  sort: DEFAULT_SORT,
 };
 
 const ELEMENT_LABELS: Record<string, (typeof ELEMENTS)[number]> = {
@@ -317,12 +330,22 @@ export default function RoomPage() {
   const filterRosterCharacters = (characters: PlayerCharacter[], filters: RosterFilters) => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
-    return characters.filter((character) => {
+    const filtered = characters.filter((character) => {
       const matchesSearch = normalizedSearch.length === 0 || character.name.toLowerCase().includes(normalizedSearch);
       const matchesElement = filters.element === "all" || getLocalizedElement(character.element) === filters.element;
       const matchesRarity = filters.rarity === "all" || String(character.rarity ?? "") === filters.rarity;
 
       return matchesSearch && matchesElement && matchesRarity;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const [sortField, sortDirection] = filters.sort.split("_") as ["level" | "constellation", "asc" | "desc"];
+      const aValue = sortField === "level" ? a.level : a.constellation;
+      const bValue = sortField === "level" ? b.level : b.constellation;
+      const valueSort = sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+
+      if (valueSort !== 0) return valueSort;
+      return a.name.localeCompare(b.name, "uk");
     });
   };
 
@@ -753,6 +776,7 @@ export default function RoomPage() {
       character_slug: character.slug,
       character_name: character.name,
       constellation: character.constellation,
+      level: character.level,
       image_path: character.imagePath,
     };
 
@@ -886,7 +910,7 @@ export default function RoomPage() {
     if (ids.length > 0) {
       const { data: userChars } = await supabase
         .from("user_characters")
-        .select("user_id, character_slug, constellation")
+        .select("user_id, character_slug, constellation, level")
         .in("user_id", ids);
 
       const allSlugs = Array.from(new Set((userChars ?? []).map((item: UserCharacter) => item.character_slug)));
@@ -910,6 +934,7 @@ export default function RoomPage() {
           element: characterData?.element ?? null,
           rarity: characterData?.rarity ?? null,
           constellation: Number(item.constellation ?? 0),
+          level: Number(item.level ?? 10),
           imagePath: characterData?.image_path ?? null,
         });
       }
@@ -1146,10 +1171,17 @@ export default function RoomPage() {
 
   const renderRosterFilters = (playerId: string, compact = false) => {
     const filters = getRosterFilters(playerId);
-    const hasFilters = filters.search.trim().length > 0 || filters.element !== "all" || filters.rarity !== "all";
+    const hasFilters =
+      filters.search.trim().length > 0 || filters.element !== "all" || filters.rarity !== "all" || filters.sort !== DEFAULT_SORT;
 
     return (
-      <div className={`grid gap-2 ${compact ? "grid-cols-[minmax(0,1fr)_88px_74px_36px]" : "grid-cols-[minmax(0,1fr)_120px_86px_40px]"}`}>
+      <div
+        className={`grid gap-2 ${
+          compact
+            ? "grid-cols-[minmax(72px,1fr)_86px_76px_58px_34px]"
+            : "grid-cols-[minmax(120px,1fr)_112px_116px_78px_40px]"
+        }`}
+      >
         <input
           type="text"
           value={filters.search}
@@ -1158,6 +1190,28 @@ export default function RoomPage() {
           aria-label="Пошук персонажа за іменем"
           className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none placeholder:text-white/35`}
         />
+        <div className="relative min-w-0">
+          <span
+            className={`pointer-events-none absolute inset-y-0 left-2 flex items-center truncate text-white ${
+              compact ? "max-w-[68px] text-[11px]" : "max-w-[94px] text-xs"
+            }`}
+          >
+            Сортування
+          </span>
+          <select
+            value={filters.sort}
+            onChange={(event) => updateRosterFilters(playerId, { sort: event.target.value as SortOption })}
+            aria-label="Сортування ростеру"
+            title="Сортування ростеру"
+            className={`${compact ? "h-9 px-1.5 text-[11px]" : "h-10 px-2 text-xs"} w-full min-w-0 rounded-lg border border-white/10 bg-white/10 text-transparent outline-none`}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option className="bg-slate-900 text-white" key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <select
           value={filters.element}
           onChange={(event) => updateRosterFilters(playerId, { element: event.target.value })}
@@ -1293,7 +1347,7 @@ export default function RoomPage() {
                     )}
                     <div className="px-1.5 py-1">
                       <p className="truncate text-[10px] font-medium text-white/90">{item.name}</p>
-                      <p className="text-[9px] text-white/55">C{item.constellation}</p>
+                      <p className="text-[9px] text-white/55">C{item.constellation} · L{item.level}</p>
                     </div>
                   </button>
                 );
@@ -1375,7 +1429,7 @@ export default function RoomPage() {
           <div
             className={`flex ${selectedFooterClass} flex-col items-center justify-center border-t border-white/15 bg-black/65 px-1 text-center font-semibold leading-tight tracking-wide`}
           >
-            <span>{pickOrderNumber ? `#${pickOrderNumber} · ` : ""}C{selection.constellation}</span>
+            <span>{pickOrderNumber ? `#${pickOrderNumber} · ` : ""}C{selection.constellation} · L{selection.level}</span>
             <span className="mt-0.5 max-w-full truncate text-[8px] font-medium tracking-normal text-white/70 sm:text-[9px]">
               Обрав(-ла): {actorName}
             </span>
@@ -1479,7 +1533,7 @@ export default function RoomPage() {
                   )}
                   <div className="px-1.5 py-1">
                     <p className="truncate text-[10px] font-medium text-white/90">{item.name}</p>
-                    <p className="text-[9px] text-white/55">C{item.constellation}</p>
+                    <p className="text-[9px] text-white/55">C{item.constellation} · L{item.level}</p>
                   </div>
                 </button>
               );

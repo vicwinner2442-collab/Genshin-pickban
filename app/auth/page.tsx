@@ -60,7 +60,7 @@ export default function AuthPage() {
         );
       }
 
-      setMessage("Успішний вхід. Тепер можеш перейти в мій список персонажів.");
+      setMessage("Успішний вхід.");
       setLoading(false);
       return;
     }
@@ -121,7 +121,7 @@ export default function AuthPage() {
 
       if (profileError) {
         if (profileError.code === "23505") {
-          setError("Цей нік вже зайнятий. Спробуй інший.");
+          setError("Цей нік вже зайнятий. Спробуйте інший.");
         } else {
           setError(profileError.message);
         }

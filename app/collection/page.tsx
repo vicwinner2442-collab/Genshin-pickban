@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { getCharacterImageUrl } from "../../lib/character-image";
 import { supabase } from "../../lib/supabase";
 
@@ -18,10 +18,20 @@ type Character = {
 type UserCharacter = {
   character_slug: string;
   constellation: number | null;
+  level: number | null;
 };
 
 const ELEMENTS = ["Піро", "Гідро", "Кріо", "Електро", "Анемо", "Гео", "Дендро"] as const;
 const WEAPONS = ["Меч", "Дворучний меч", "Спис", "Каталізатор", "Лук"] as const;
+const CHARACTER_LEVEL_OPTIONS = Array.from({ length: 10 }, (_, index) => (index + 1) * 10);
+const SORT_OPTIONS = [
+  { value: "level_desc", label: "Від більшого рівня до меншого" },
+  { value: "level_asc", label: "Від меншого рівня до більшого" },
+  { value: "constellation_desc", label: "Від більшої кількості сузір'їв" },
+  { value: "constellation_asc", label: "Від меншої кількості сузір'їв" },
+] as const;
+type SortOption = (typeof SORT_OPTIONS)[number]["value"];
+const DEFAULT_SORT: SortOption = "level_desc";
 
 const ELEMENT_LABELS: Record<string, (typeof ELEMENTS)[number]> = {
   Pyro: "Піро",
@@ -65,6 +75,14 @@ function formatSupabaseError(error: { message: string; code?: string } | null) {
   }
 
   return error.message;
+}
+
+function normalizeCharacterLevel(level: number | null | undefined) {
+  return Math.min(100, Math.max(10, Number(level) || 10));
+}
+
+function compareByDirection(a: number, b: number, direction: "asc" | "desc") {
+  return direction === "asc" ? a - b : b - a;
 }
 
 function getElementBadgeClass(element: string | null) {
@@ -117,12 +135,16 @@ export default function CollectionPage() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedBySlug, setSelectedBySlug] = useState<Record<string, number>>({});
+  const [selectedLevelsBySlug, setSelectedLevelsBySlug] = useState<Record<string, number>>({});
+  const [levelDraftsBySlug, setLevelDraftsBySlug] = useState<Record<string, string>>({});
+  const [openLevelPickerSlug, setOpenLevelPickerSlug] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
   const [search, setSearch] = useState("");
   const [rarityFilters, setRarityFilters] = useState<Array<"4" | "5">>([]);
   const [elementFilter, setElementFilter] = useState("all");
   const [weaponFilter, setWeaponFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<SortOption>(DEFAULT_SORT);
 
   const selectedSet = useMemo(() => new Set(Object.keys(selectedBySlug)), [selectedBySlug]);
   const selectedCount = useMemo(() => Object.keys(selectedBySlug).length, [selectedBySlug]);
@@ -158,7 +180,7 @@ export default function CollectionPage() {
 
       const { data: picked, error: pickedError } = await supabase
         .from("user_characters")
-        .select("character_slug, constellation")
+        .select("character_slug, constellation, level")
         .eq("user_id", user.id);
 
       if (pickedError) {
@@ -169,10 +191,17 @@ export default function CollectionPage() {
 
       setCharacters(chars ?? []);
       const pickedMap: Record<string, number> = {};
+      const pickedLevelMap: Record<string, number> = {};
+      const pickedLevelDraftMap: Record<string, string> = {};
       for (const item of (picked ?? []) as UserCharacter[]) {
+        const level = normalizeCharacterLevel(item.level);
         pickedMap[item.character_slug] = item.constellation ?? 0;
+        pickedLevelMap[item.character_slug] = level;
+        pickedLevelDraftMap[item.character_slug] = String(level);
       }
       setSelectedBySlug(pickedMap);
+      setSelectedLevelsBySlug(pickedLevelMap);
+      setLevelDraftsBySlug(pickedLevelDraftMap);
       setLoading(false);
     };
 
@@ -180,7 +209,7 @@ export default function CollectionPage() {
   }, []);
 
   const filteredCharacters = useMemo(() => {
-    return characters.filter((character) => {
+    const filtered = characters.filter((character) => {
       const matchesSearch = character.name.toLowerCase().includes(search.toLowerCase());
       const matchesRarity =
         rarityFilters.length === 0 || (character.rarity !== null && rarityFilters.includes(String(character.rarity) as "4" | "5"));
@@ -189,7 +218,36 @@ export default function CollectionPage() {
 
       return matchesSearch && matchesRarity && matchesElement && matchesWeapon;
     });
-  }, [characters, search, rarityFilters, elementFilter, weaponFilter]);
+
+    return [...filtered].sort((a, b) => {
+      const aSelected = selectedSet.has(a.slug);
+      const bSelected = selectedSet.has(b.slug);
+      if (aSelected !== bSelected) return aSelected ? -1 : 1;
+
+      const [sortField, sortDirection] = sortBy.split("_") as ["level" | "constellation", "asc" | "desc"];
+      const aValue =
+        sortField === "level"
+          ? aSelected
+            ? selectedLevelsBySlug[a.slug] ?? 10
+            : -1
+          : aSelected
+          ? selectedBySlug[a.slug] ?? 0
+          : -1;
+      const bValue =
+        sortField === "level"
+          ? bSelected
+            ? selectedLevelsBySlug[b.slug] ?? 10
+            : -1
+          : bSelected
+          ? selectedBySlug[b.slug] ?? 0
+          : -1;
+
+      const valueSort = compareByDirection(aValue, bValue, sortDirection);
+      if (valueSort !== 0) return valueSort;
+
+      return a.name.localeCompare(b.name, "uk");
+    });
+  }, [characters, search, rarityFilters, elementFilter, weaponFilter, sortBy, selectedBySlug, selectedLevelsBySlug, selectedSet]);
 
   const toggleCharacter = async (slug: string) => {
     const {
@@ -223,6 +281,17 @@ export default function CollectionPage() {
         delete next[slug];
         return next;
       });
+      setSelectedLevelsBySlug((prev) => {
+        const next = { ...prev };
+        delete next[slug];
+        return next;
+      });
+      setLevelDraftsBySlug((prev) => {
+        const next = { ...prev };
+        delete next[slug];
+        return next;
+      });
+      setOpenLevelPickerSlug((prev) => (prev === slug ? null : prev));
       return;
     }
 
@@ -230,6 +299,7 @@ export default function CollectionPage() {
       user_id: user.id,
       character_slug: slug,
       constellation: 0,
+      level: 10,
     });
 
     setSavingSlug(null);
@@ -240,6 +310,22 @@ export default function CollectionPage() {
     }
 
     setSelectedBySlug((prev) => ({ ...prev, [slug]: 0 }));
+    setSelectedLevelsBySlug((prev) => ({ ...prev, [slug]: 10 }));
+    setLevelDraftsBySlug((prev) => ({ ...prev, [slug]: "10" }));
+  };
+
+  const handleCharacterCardClick = (slug: string) => {
+    if (savingSlug === slug) return;
+    void toggleCharacter(slug);
+  };
+
+  const handleCharacterCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, slug: string) => {
+    if (event.target !== event.currentTarget || savingSlug === slug) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      void toggleCharacter(slug);
+    }
   };
 
   const updateConstellation = async (slug: string, constellation: number) => {
@@ -274,17 +360,76 @@ export default function CollectionPage() {
     setSelectedBySlug((prev) => ({ ...prev, [slug]: constellation }));
   };
 
+  const updateLevel = async (slug: string, level: number) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setMessage("Спочатку увійдіть в акаунт.");
+      return;
+    }
+
+    setSavingSlug(slug);
+    setMessage("");
+
+    const nextLevel = normalizeCharacterLevel(level);
+
+    const { error } = await supabase.from("user_characters").upsert(
+      {
+        user_id: user.id,
+        character_slug: slug,
+        level: nextLevel,
+      },
+      { onConflict: "user_id,character_slug" }
+    );
+
+    setSavingSlug(null);
+
+    if (error) {
+      setMessage(formatSupabaseError(error));
+      setLevelDraftsBySlug((prev) => ({ ...prev, [slug]: String(selectedLevelsBySlug[slug] ?? 10) }));
+      return;
+    }
+
+    setSelectedLevelsBySlug((prev) => ({ ...prev, [slug]: nextLevel }));
+    setLevelDraftsBySlug((prev) => ({ ...prev, [slug]: String(nextLevel) }));
+    setOpenLevelPickerSlug(null);
+  };
+
+  const commitLevelDraft = (slug: string) => {
+    const draft = levelDraftsBySlug[slug];
+    const nextLevel = normalizeCharacterLevel(draft === "" ? selectedLevelsBySlug[slug] : Number(draft));
+
+    setLevelDraftsBySlug((prev) => ({ ...prev, [slug]: String(nextLevel) }));
+
+    if (nextLevel !== selectedLevelsBySlug[slug]) {
+      void updateLevel(slug, nextLevel);
+    }
+  };
+
   const clearFilters = () => {
     setSearch("");
     setRarityFilters([]);
     setElementFilter("all");
     setWeaponFilter("all");
+    setSortBy(DEFAULT_SORT);
   };
+
+  const hasFilters =
+    search.trim().length > 0 ||
+    rarityFilters.length > 0 ||
+    elementFilter !== "all" ||
+    weaponFilter !== "all" ||
+    sortBy !== DEFAULT_SORT;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setMessage("Ви вийшли з акаунта.");
     setSelectedBySlug({});
+    setSelectedLevelsBySlug({});
+    setLevelDraftsBySlug({});
+    setOpenLevelPickerSlug(null);
     setUserEmail("");
   };
 
@@ -392,11 +537,31 @@ export default function CollectionPage() {
             ))}
           </select>
 
+          <div className="relative h-14 lg:col-span-2">
+            <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-white">Сортування</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              aria-label="Сортування персонажів"
+              className="h-14 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-transparent outline-none"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option className="bg-slate-900 text-white" key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
+            type="button"
             onClick={clearFilters}
-            className="h-14 rounded-2xl border border-white/15 bg-white/10 px-4 font-medium hover:bg-white/15 lg:col-span-3"
+            disabled={!hasFilters}
+            title="Скинути фільтри та сортування"
+            aria-label="Скинути фільтри та сортування"
+            className="h-14 rounded-2xl border border-white/15 bg-white/10 px-4 text-xl font-semibold text-white/80 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40 lg:col-span-1"
           >
-            Скинути фільтри
+            ↺
           </button>
         </div>
 
@@ -431,16 +596,19 @@ export default function CollectionPage() {
               const isSelected = selectedSet.has(character.slug);
 
               return (
-                <button
-                  type="button"
+                <div
                   key={character.slug}
-                  onClick={() => void toggleCharacter(character.slug)}
-                  disabled={savingSlug === character.slug}
+                  role="button"
+                  tabIndex={savingSlug === character.slug ? -1 : 0}
+                  aria-pressed={isSelected}
+                  aria-disabled={savingSlug === character.slug}
+                  onClick={() => handleCharacterCardClick(character.slug)}
+                  onKeyDown={(event) => handleCharacterCardKeyDown(event, character.slug)}
                   className={`group rounded-3xl border p-5 text-left shadow-lg transition ${
                     isSelected
                       ? "border-violet-300/50 bg-violet-500/12 ring-1 ring-violet-300/30"
                       : "border-white/10 bg-slate-900/35 hover:bg-slate-800/50"
-                  } ${savingSlug === character.slug ? "cursor-not-allowed opacity-80" : ""}`}
+                  } ${savingSlug === character.slug ? "cursor-not-allowed opacity-80" : "cursor-pointer"}`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="shrink-0">
@@ -491,31 +659,96 @@ export default function CollectionPage() {
 
                       <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/75">
                         {isSelected ? (
-                          <label className="flex items-center justify-between gap-3" data-constellation-control="true">
-                            <span className="text-white/80">Консти:</span>
-                            <select
-                              value={String(selectedBySlug[character.slug] ?? 0)}
-                              data-constellation-control="true"
-                              onMouseDown={(event) => event.stopPropagation()}
-                              onPointerDown={(event) => event.stopPropagation()}
-                              onClick={(event) => event.stopPropagation()}
-                              onChange={(event) => void updateConstellation(character.slug, Number(event.target.value))}
-                              className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-white outline-none"
-                            >
-                              {Array.from({ length: 7 }, (_, index) => (
-                                <option key={index} value={index} className="bg-slate-900 text-white">
-                                  C{index}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                          <div
+                            className="space-y-2"
+                            onClick={(event) => event.stopPropagation()}
+                            onPointerDown={(event) => event.stopPropagation()}
+                          >
+                            <label className="flex items-center justify-between gap-2" data-constellation-control="true">
+                              <span className="text-white/80">Консти:</span>
+                              <select
+                                value={String(selectedBySlug[character.slug] ?? 0)}
+                                data-constellation-control="true"
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onPointerDown={(event) => event.stopPropagation()}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) => void updateConstellation(character.slug, Number(event.target.value))}
+                                className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-xs text-white outline-none"
+                              >
+                                {Array.from({ length: 7 }, (_, index) => (
+                                  <option key={index} value={index} className="bg-slate-900 text-white">
+                                    C{index}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+
+                            <label className="flex items-center justify-between gap-2" data-level-control="true">
+                              <span className="text-white/80">Рівень:</span>
+                              <span className="relative">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={levelDraftsBySlug[character.slug] ?? String(selectedLevelsBySlug[character.slug] ?? 10)}
+                                  data-level-control="true"
+                                  onMouseDown={(event) => event.stopPropagation()}
+                                  onPointerDown={(event) => event.stopPropagation()}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOpenLevelPickerSlug(character.slug);
+                                  }}
+                                  onFocus={() => setOpenLevelPickerSlug(character.slug)}
+                                  onChange={(event) =>
+                                    setLevelDraftsBySlug((prev) => ({ ...prev, [character.slug]: event.target.value.replace(/\D/g, "") }))
+                                  }
+                                  onBlur={() => commitLevelDraft(character.slug)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.currentTarget.blur();
+                                    }
+
+                                    if (event.key === "Escape") {
+                                      setOpenLevelPickerSlug(null);
+                                      event.currentTarget.blur();
+                                    }
+                                  }}
+                                  className="w-16 rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-xs text-white outline-none focus:border-violet-300/45"
+                                />
+
+                                {openLevelPickerSlug === character.slug && (
+                                  <span className="absolute right-0 top-[calc(100%+8px)] z-50 grid w-40 grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-[#111827] p-1 shadow-2xl">
+                                    {CHARACTER_LEVEL_OPTIONS.map((level) => (
+                                      <span
+                                        key={level}
+                                        role="option"
+                                        aria-selected={normalizeCharacterLevel(selectedLevelsBySlug[character.slug]) === level}
+                                        onMouseDown={(event) => {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          setLevelDraftsBySlug((prev) => ({ ...prev, [character.slug]: String(level) }));
+                                          void updateLevel(character.slug, level);
+                                        }}
+                                        className={`rounded-lg px-3 py-2 text-left text-xs font-semibold transition hover:bg-violet-400/20 ${
+                                          normalizeCharacterLevel(selectedLevelsBySlug[character.slug]) === level
+                                            ? "bg-violet-400/25 text-violet-50"
+                                            : "text-white/85"
+                                        }`}
+                                      >
+                                        {level}
+                                      </span>
+                                    ))}
+                                  </span>
+                                )}
+                              </span>
+                            </label>
+                          </div>
                         ) : (
-                          <span className="text-white/55">Додайте персонажа, щоб обрати консту</span>
+                          <span className="text-white/55">Додайте персонажа, щоб обрати консту та рівень</span>
                         )}
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

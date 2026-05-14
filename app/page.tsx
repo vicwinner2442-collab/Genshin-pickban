@@ -228,7 +228,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(50%_55%_at_92%_18%,rgba(129,95,255,0.32)_0%,rgba(84,39,199,0.16)_42%,transparent_74%),radial-gradient(85%_65%_at_15%_0%,#0f5f7e_0%,#061b45_45%,#040a24_100%),radial-gradient(70%_45%_at_50%_105%,rgba(255,78,158,0.55)_0%,rgba(176,39,117,0.35)_35%,transparent_72%)] text-white">
-      <section className="mx-auto flex min-h-[72vh] max-w-6xl flex-col items-center justify-start px-6 pt-20 pb-12 text-center md:pt-24">
+      <section className="mx-auto flex w-full max-w-screen-xl flex-col items-center justify-start px-4 pt-10 pb-12 text-center sm:px-6 md:px-8 md:pt-16">
         <h1 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
           Драфтилка для батлів
         </h1>
@@ -279,7 +279,64 @@ export default function Home() {
 
       </section>
 
-      <section className="mx-auto mt-2 w-full max-w-6xl px-6 pb-16 md:-mt-12">
+      <section className="mx-auto mt-0 w-full max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mb-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur md:p-8">
+          <h2 className="text-2xl font-bold md:text-3xl">Як грати?</h2>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-4">
+            <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 1</p>
+              <h3 className="mt-2 text-lg font-semibold">Відмітьте, хто у вас є</h3>
+              <p className="mt-2 text-sm text-white/70">
+                На сторінці “Мої персонажі" оберіть персонажів, які у вас є. Воно збережеться і підв'яжеться до акаунту.
+              </p>
+            </div>
+
+            <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 2</p>
+              <h3 className="mt-2 text-lg font-semibold">Створіть або приєднайтеся до кімнати</h3>
+              <p className="mt-2 text-sm text-white/70">
+                Один гравець створює кімнату, другий заходить по коду.
+              </p>
+            </div>
+
+            <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 3</p>
+              <h3 className="mt-2 text-lg font-semibold">Бани і піки</h3>
+              <p className="mt-2 text-sm text-white/70">
+                В залежності від режимів, ви баните персонажів гравцю/один одному. Після банів обирайте, ким гратимете, і переходьте до безодні!
+              </p>
+            </div>
+
+            <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 4</p>
+              <h3 className="mt-2 text-lg font-semibold">Налаштування</h3>
+              <p className="mt-2 text-sm text-white/70">
+                Кімнати можна налаштувати, деякі налаштування залежать від режиму. Можна налаштувати бани від 1 до 4 (в режимі "Два акаунти" - "1 бан на гравця"), таймер (без нього, 1-5 хв на хід). Загалом можна обрати 8 (16) персонажів, к-сть фіксована.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
+              <h3 className="text-lg font-semibold">Один акаунт</h3>
+              <p className="mt-2 text-sm text-white/70">
+                Банимо і пікаємо на один акаунт, проходимо безодню по черзі на швидкість.
+                Потім скидаємо драфт і повторюємо бани/піки вже на другий акаунт.
+              </p>
+            </div>
+
+            <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
+              <h3 className="text-lg font-semibold">Два акаунти</h3>
+              <p className="mt-2 text-sm text-white/70">
+                Для тих, хто не хоче ділитися акаунтами: обираємо персонажів в імунітет, банимо, пікаємо і проходимо безодню на швидкість.
+                Персонажа в імунітеті можуть обрати обидва, але лише в особливий слот.
+                Якщо один гравець запікнув персонажа, інший вже не зможе обрати цього ж персонажа.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-6 rounded-3xl border border-white/10 bg-slate-900/45 p-6 shadow-xl backdrop-blur md:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -309,115 +366,94 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4">
-            {ABYSS_NOW.chambers.map((chamber) => (
-              <article key={chamber.id} className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-lg font-semibold">Зала {chamber.id}</h3>
-                  <p className="text-sm text-white/60">{chamber.completion}</p>
-                </div>
-
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {[chamber.firstHalf, chamber.secondHalf].map((half) => (
-                    <div key={half.label} className="rounded-2xl border border-white/10 bg-slate-900/35 p-3">
-                      <p className="text-sm font-semibold">{half.label}</p>
-                      <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
-                        {half.enemies.map((enemy) => (
-                          <div key={`${chamber.id}-${half.label}-${enemy.name}`} className="group relative">
-                            <div className="flex h-[190px] w-full min-w-0 flex-col rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center">
-                              <div className="mx-auto h-18 w-18 overflow-hidden rounded-xl border border-white/10 bg-white/10">
-                                <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
-                              </div>
-                              <p className="mt-auto min-h-[20px] text-sm font-semibold leading-tight">{enemy.name}</p>
-                              <p className="mt-auto text-xs text-white/80">Lv.{enemy.level}</p>
-                              <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
-                                <span>HP {enemy.hp}</span>
-                                {enemy.count ? (
-                                  <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-semibold text-violet-100">
-                                    x{enemy.count}
-                                  </span>
-                                ) : null}
-                              </div>
+          <div className="mt-5 space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+              <p className="text-sm font-semibold">Перша половина</p>
+              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {ABYSS_NOW.chambers.map((chamber) => (
+                  <article key={`${chamber.id}-first`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold">Зала {chamber.id}</p>
+                      <p className="text-xs text-white/60">{chamber.completion}</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {chamber.firstHalf.enemies.map((enemy) => (
+                        <div key={`${chamber.id}-first-${enemy.name}`} className="group relative">
+                          <div className="flex h-[160px] w-full min-w-0 flex-col rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center">
+                            <div className="mx-auto h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                              <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
                             </div>
-
-                            <div className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-40 hidden max-h-[min(70vh,620px)] w-[min(92vw,520px)] -translate-x-1/2 overflow-y-auto rounded-xl border border-white/10 bg-[#09122b]/95 p-4 text-left shadow-2xl group-hover:block">
-                              <p className="text-xs font-semibold">{enemy.name}</p>
-                              <p className="mt-1 text-[11px] text-white/70">
-                                Lv. {enemy.level} · HP: {enemy.hp}
-                                {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
-                              </p>
-                              <p className="mt-2 text-[11px] font-semibold text-violet-200">{enemy.hoverTitle}</p>
-                              <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
+                            <p className="mt-auto min-h-[20px] text-sm font-semibold leading-tight">{enemy.name}</p>
+                            <p className="mt-auto text-xs text-white/80">Lv.{enemy.level}</p>
+                            <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
+                              <span>HP {enemy.hp}</span>
+                              {enemy.count ? (
+                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-semibold text-violet-100">
+                                  x{enemy.count}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
-                        ))}
-                      </div>
+
+                          <div className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-40 hidden max-h-[min(70vh,620px)] w-[min(92vw,520px)] -translate-x-1/2 overflow-y-auto rounded-xl border border-white/10 bg-[#09122b]/95 p-4 text-left shadow-2xl group-hover:block">
+                            <p className="text-xs font-semibold">{enemy.name}</p>
+                            <p className="mt-1 text-[11px] text-white/70">
+                              Lv. {enemy.level} · HP: {enemy.hp}
+                              {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
+                            </p>
+                            <p className="mt-2 text-[11px] font-semibold text-violet-200">{enemy.hoverTitle}</p>
+                            <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid items-stretch gap-4 lg:grid-cols-2">
-          <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur md:p-8">
-            <h2 className="text-2xl font-bold md:text-3xl">Як грати?</h2>
-
-            <div className="mt-6 grid flex-1 auto-rows-fr gap-4 md:grid-cols-2">
-              <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4 md:col-start-1 md:row-start-1">
-                <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 1</p>
-                <h3 className="mt-2 text-lg font-semibold">Відмітьте, хто у вас є</h3>
-                <p className="mt-2 text-sm text-white/70">
-                  На сторінці “Мої персонажі" оберіть персонажів, які у вас є. Воно збережеться і підв'яжеться до акаунту.
-                </p>
-              </div>
-
-              <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4 md:col-start-1 md:row-start-2">
-                <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 2</p>
-                <h3 className="mt-2 text-lg font-semibold">Створіть або приєднайтеся до кімнати</h3>
-                <p className="mt-2 text-sm text-white/70">
-                  Один гравець створює кімнату, другий заходить по коду.
-                </p>
-              </div>
-
-              <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4 md:col-start-2 md:row-start-1">
-                <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 3</p>
-                <h3 className="mt-2 text-lg font-semibold">Бани і піки</h3>
-                <p className="mt-2 text-sm text-white/70">
-                  В залежності від режимів, ви баните персонажів гравцю/один одному. Після банів обирайте, ким гратимете, і переходьте до безодні!
-                </p>
-              </div>
-
-              <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4 md:col-start-2 md:row-start-2">
-                <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 4</p>
-                <h3 className="mt-2 text-lg font-semibold">Налаштування</h3>
-                <p className="mt-2 text-sm text-white/70">
-                  Кімнати можна налаштувати, деякі налаштування залежать від режиму. Можна налаштувати бани від 1 до 4 (в режимі "Два акаунти" - "1 бан на гравця"), таймер (без нього, 1-5 хв на хід). Загалом можна обрати 8 (16) персонажів, к-сть фіксована.
-                </p>
+                  </article>
+                ))}
               </div>
             </div>
-          </div>
 
-          <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur md:p-8">
-            <h2 className="text-2xl font-bold md:text-3xl">Режими</h2>
+            <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+              <p className="text-sm font-semibold">Друга половина</p>
+              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {ABYSS_NOW.chambers.map((chamber) => (
+                  <article key={`${chamber.id}-second`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold">Зала {chamber.id}</p>
+                      <p className="text-xs text-white/60">{chamber.completion}</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {chamber.secondHalf.enemies.map((enemy) => (
+                        <div key={`${chamber.id}-second-${enemy.name}`} className="group relative">
+                          <div className="flex h-[160px] w-full min-w-0 flex-col rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center">
+                            <div className="mx-auto h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-white/10">
+                              <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
+                            </div>
+                            <p className="mt-auto min-h-[20px] text-sm font-semibold leading-tight">{enemy.name}</p>
+                            <p className="mt-auto text-xs text-white/80">Lv.{enemy.level}</p>
+                            <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
+                              <span>HP {enemy.hp}</span>
+                              {enemy.count ? (
+                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-semibold text-violet-100">
+                                  x{enemy.count}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
 
-            <div className="mt-6 grid flex-1 auto-rows-fr gap-4">
-              <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
-                <h3 className="text-lg font-semibold">Один акаунт</h3>
-                <p className="mt-2 text-sm text-white/70">
-                  Банимо і пікаємо на один акаунт, проходимо безодню по черзі на швидкість.
-                  Потім скидаємо драфт і повторюємо бани/піки вже на другий акаунт.
-                </p>
-              </div>
-
-              <div className="h-full rounded-2xl border border-white/10 bg-black/15 p-4">
-                <h3 className="text-lg font-semibold">Два акаунти</h3>
-                <p className="mt-2 text-sm text-white/70">
-                  Для тих, хто не хоче ділитися акаунтами: обираємо персонажів в імунітет, банимо, пікаємо і проходимо безодню на швидкість.
-                  Персонажа в імунітеті можуть обрати обидва, але лише в особливий слот.
-                  Якщо один гравець запікнув персонажа, інший вже не зможе обрати цього ж персонажа.
-                </p>
+                          <div className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-40 hidden max-h-[min(70vh,620px)] w-[min(92vw,520px)] -translate-x-1/2 overflow-y-auto rounded-xl border border-white/10 bg-[#09122b]/95 p-4 text-left shadow-2xl group-hover:block">
+                            <p className="text-xs font-semibold">{enemy.name}</p>
+                            <p className="mt-1 text-[11px] text-white/70">
+                              Lv. {enemy.level} · HP: {enemy.hp}
+                              {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
+                            </p>
+                            <p className="mt-2 text-[11px] font-semibold text-violet-200">{enemy.hoverTitle}</p>
+                            <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
               </div>
             </div>
           </div>

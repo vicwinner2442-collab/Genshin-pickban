@@ -322,11 +322,16 @@ do $$
 begin
   if to_regclass('public.user_characters') is not null then
     alter table public.user_characters
-      add column if not exists constellation smallint not null default 0;
+      add column if not exists constellation smallint not null default 0,
+      add column if not exists level smallint not null default 10;
 
     update public.user_characters
     set constellation = 0
     where constellation is null or constellation < 0 or constellation > 6;
+
+    update public.user_characters
+    set level = 10
+    where level is null or level < 10 or level > 100;
 
     if not exists (
       select 1
@@ -336,6 +341,16 @@ begin
     ) then
       alter table public.user_characters
         add constraint user_characters_constellation_range check (constellation between 0 and 6);
+    end if;
+
+    if not exists (
+      select 1
+      from pg_constraint
+      where conname = 'user_characters_level_range'
+        and conrelid = 'public.user_characters'::regclass
+    ) then
+      alter table public.user_characters
+        add constraint user_characters_level_range check (level between 10 and 100);
     end if;
   end if;
 end $$;
