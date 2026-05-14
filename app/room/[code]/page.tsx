@@ -1185,8 +1185,8 @@ export default function RoomPage() {
       <div
         className={`grid gap-2 ${
           compact
-            ? "grid-cols-[minmax(72px,1fr)_86px_76px_58px_34px]"
-            : "grid-cols-[minmax(120px,1fr)_112px_116px_78px_40px]"
+            ? "grid-cols-1 sm:grid-cols-[minmax(72px,1fr)_86px_76px_58px_34px]"
+            : "grid-cols-1 sm:grid-cols-[minmax(120px,1fr)_112px_116px_78px_40px]"
         }`}
       >
         <input
