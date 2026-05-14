@@ -339,6 +339,13 @@ export default function RoomPage() {
     });
 
     return [...filtered].sort((a, b) => {
+      // Sort by rarity descending (5* above 4*)
+      const aRarity = a.rarity ?? 0;
+      const bRarity = b.rarity ?? 0;
+      if (aRarity !== bRarity) {
+        return bRarity - aRarity;
+      }
+
       const [sortField, sortDirection] = filters.sort.split("_") as ["level" | "constellation", "asc" | "desc"];
       const aValue = sortField === "level" ? a.level : a.constellation;
       const bValue = sortField === "level" ? b.level : b.constellation;

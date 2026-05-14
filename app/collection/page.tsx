@@ -220,6 +220,13 @@ export default function CollectionPage() {
     });
 
     return [...filtered].sort((a, b) => {
+      // Sort by rarity descending (5* above 4*)
+      const aRarity = a.rarity ?? 0;
+      const bRarity = b.rarity ?? 0;
+      if (aRarity !== bRarity) {
+        return bRarity - aRarity;
+      }
+
       const aSelected = selectedSet.has(a.slug);
       const bSelected = selectedSet.has(b.slug);
       if (aSelected !== bSelected) return aSelected ? -1 : 1;
