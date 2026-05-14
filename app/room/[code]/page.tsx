@@ -1037,42 +1037,20 @@ export default function RoomPage() {
     const actorName =
       turnRole === "host" ? getDisplayName(hostPlayer) || "Гравець 1" : getDisplayName(guestPlayer) || "Гравець 2";
 
-    if (phase === "immunity") {
-      return `Імунітет ${draft.immunities.length + 1}/${immunityCount}: ${actorName} ходить`;
-    }
+    const remainingPicksThisTurn =
+      draftMode === "dual_roster" ? dualPickStepRemaining : draftMode === "single_roster" ? singlePickStepRemaining : 0;
+    const repeatHint = phase === "pick" && remainingPicksThisTurn > 1 ? " (два рази)" : "";
 
-    if (phase === "ban") {
-      return `Бан ${draft.bans.length + 1}/${banLimit}: ${actorName} ходить`;
-    }
-
-    const dualPickCountHint =
-      draftMode === "dual_roster" && dualPickTurnState && dualPickTurnState.count > 1
-        ? ` · обери ${dualPickStepRemaining}/${dualPickTurnState.count}`
-        : "";
-    const singlePickCountHint =
-      draftMode === "single_roster" && singlePickTurnState && singlePickTurnState.count > 1
-        ? ` · обери ${singlePickStepRemaining}/${singlePickTurnState.count}`
-        : "";
-    const immuneSlotHint = draftMode === "dual_roster" && isCurrentPickImmuneSlot ? " · імун-слот" : "";
-    return `Пік ${draft.picks.length + 1}/${pickLimit}: ${actorName} ходить${dualPickCountHint}${singlePickCountHint}${immuneSlotHint}`;
+    return `${actorName} ходить${repeatHint}`;
   }, [
     waitingForReady,
     phase,
     turnRole,
     hostPlayer,
     guestPlayer,
-    draft.immunities.length,
-    immunityCount,
-    draft.bans.length,
-    banLimit,
     draftMode,
-    dualPickTurnState,
     dualPickStepRemaining,
-    singlePickTurnState,
     singlePickStepRemaining,
-    isCurrentPickImmuneSlot,
-    draft.picks.length,
-    pickLimit,
   ]);
 
   const turnSecondsForCurrentPhase = useMemo(() => {
