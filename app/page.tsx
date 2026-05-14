@@ -373,7 +373,7 @@ export default function Home() {
                 {ABYSS_NOW.chambers.map((chamber) => (
                   <article key={`${chamber.id}-first`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold">Зала {chamber.id}</p>
+                      <p className="text-sm font-normal">Зала {chamber.id}</p>
                       <p className="text-xs text-white/60">{chamber.completion}</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,12 +383,12 @@ export default function Home() {
                             <div className="mx-auto h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-white/10">
                               <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
                             </div>
-                            <p className="mt-auto min-h-[20px] text-sm font-semibold leading-tight">{enemy.name}</p>
-                            <p className="mt-auto text-xs text-white/80">Lv.{enemy.level}</p>
+                            <p className="mt-auto min-h-[20px] text-xs font-normal leading-tight">{enemy.name}</p>
+                            <p className="mt-auto text-[0.68rem] text-white/80">Lv.{enemy.level}</p>
                             <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
                               <span>HP {enemy.hp}</span>
                               {enemy.count ? (
-                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-semibold text-violet-100">
+                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-medium text-violet-100">
                                   x{enemy.count}
                                 </span>
                               ) : null}
@@ -418,7 +418,7 @@ export default function Home() {
                 {ABYSS_NOW.chambers.map((chamber) => (
                   <article key={`${chamber.id}-second`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold">Зала {chamber.id}</p>
+                      <p className="text-sm font-normal">Зала {chamber.id}</p>
                       <p className="text-xs text-white/60">{chamber.completion}</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -428,12 +428,12 @@ export default function Home() {
                             <div className="mx-auto h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-white/10">
                               <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
                             </div>
-                            <p className="mt-auto min-h-[20px] text-sm font-semibold leading-tight">{enemy.name}</p>
-                            <p className="mt-auto text-xs text-white/80">Lv.{enemy.level}</p>
+                            <p className="mt-auto min-h-[20px] text-xs font-normal leading-tight">{enemy.name}</p>
+                            <p className="mt-auto text-[0.68rem] text-white/80">Lv.{enemy.level}</p>
                             <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
                               <span>HP {enemy.hp}</span>
                               {enemy.count ? (
-                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-semibold text-violet-100">
+                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-medium text-violet-100">
                                   x{enemy.count}
                                 </span>
                               ) : null}
