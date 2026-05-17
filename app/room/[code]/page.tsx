@@ -171,6 +171,10 @@ function formatRoomError(error: { message: string; code?: string } | null) {
     return 'У таблиці "rooms" бракує нових колонок налаштувань. Запусти оновлений SQL зі схеми (rooms-schema.sql).';
   }
 
+  if (/update_room_draft_state_if_current/i.test(error.message)) {
+    return 'У Supabase ще немає функції для безпечного збереження драфту. Запусти оновлений SQL зі схеми "rooms-schema.sql".';
+  }
+
   return error.message;
 }
 
@@ -305,6 +309,7 @@ export default function RoomPage() {
   const [draft, setDraft] = useState<DraftState>(EMPTY_DRAFT);
   const [nowTs, setNowTs] = useState<number>(() => Date.now());
   const autoTurnLockRef = useRef<string>("");
+  const draftWriteInFlightRef = useRef(false);
 
   const isHost = room?.host_user_id === userId;
 
@@ -395,11 +400,24 @@ export default function RoomPage() {
   );
   const firstTurnUserId = useMemo(() => {
     if (!hasGuest) return hostPlayer?.user_id ?? null;
+    if (draftMode === "single_roster") {
+      const targetUserId = draft.target_user_id ?? hostPlayer?.user_id ?? null;
+      if (targetUserId === hostPlayer?.user_id) return guestPlayer?.user_id ?? null;
+      if (targetUserId === guestPlayer?.user_id) return hostPlayer?.user_id ?? null;
+    }
     if (draft.first_turn_user_id && participantUserIds.includes(draft.first_turn_user_id)) {
       return draft.first_turn_user_id;
     }
     return guestPlayer?.user_id ?? hostPlayer?.user_id ?? null;
-  }, [hasGuest, hostPlayer?.user_id, guestPlayer?.user_id, participantUserIds, draft.first_turn_user_id]);
+  }, [
+    hasGuest,
+    draftMode,
+    hostPlayer?.user_id,
+    guestPlayer?.user_id,
+    participantUserIds,
+    draft.first_turn_user_id,
+    draft.target_user_id,
+  ]);
   const firstTurnRole: TurnRole = firstTurnUserId === hostPlayer?.user_id ? "host" : "guest";
   const oppositeTurnRole: TurnRole = firstTurnRole === "host" ? "guest" : "host";
   const dualRosterPickTurns = useMemo(() => getDualRosterPickTurns(firstTurnRole), [firstTurnRole]);
@@ -613,8 +631,10 @@ export default function RoomPage() {
   }, []);
 
   const persistDraft = async (nextDraft: DraftState, options?: { resetTurnTimer?: boolean }) => {
-    if (!roomCode) return;
+    if (!roomCode) return false;
+    if (draftWriteInFlightRef.current) return false;
 
+    draftWriteInFlightRef.current = true;
     setSavingDraft(true);
     setMessage("");
 
@@ -624,19 +644,37 @@ export default function RoomPage() {
       turn_started_at: shouldResetTurnTimer ? new Date().toISOString() : nextDraft.turn_started_at,
     };
 
-    const { error } = await supabase
-      .from("rooms")
-      .update({ draft_state: payload })
-      .eq("code", roomCode);
+    const { data, error } = await supabase.rpc("update_room_draft_state_if_current", {
+      room_code: roomCode,
+      expected_draft_state: draft,
+      next_draft_state: payload,
+    });
 
+    draftWriteInFlightRef.current = false;
     setSavingDraft(false);
 
     if (error) {
       setMessage(formatRoomError(error));
-      return;
+      return false;
     }
 
-    setDraft(payload);
+    const updatedRoom = (Array.isArray(data) ? data[0] : data) as Room | null;
+
+    if (!updatedRoom) {
+      setMessage("Стан драфту вже змінився. Оновлюю кімнату, спробуй ще раз.");
+      void syncDraftFromServer();
+      return false;
+    }
+
+    const updatedDraftMode: DraftMode = updatedRoom.draft_mode === "dual_roster" ? "dual_roster" : "single_roster";
+    const updatedPickLimit = updatedDraftMode === "dual_roster" ? 16 : 8;
+    const updatedImmunityCount = updatedDraftMode === "dual_roster" ? 2 : 0;
+    const updatedBanPerPlayer = Math.max(1, updatedRoom.ban_count ?? 2);
+    const updatedBanLimit = updatedDraftMode === "dual_roster" ? updatedBanPerPlayer * 2 : updatedBanPerPlayer;
+
+    setRoom(updatedRoom);
+    setDraft(normalizeDraftState(updatedRoom.draft_state, updatedImmunityCount, updatedBanLimit, updatedPickLimit));
+    return true;
   };
 
   const setDraftTargetUser = async (targetUserId: string) => {
@@ -650,7 +688,8 @@ export default function RoomPage() {
       return;
     }
 
-    await persistDraft({ ...draft, target_user_id: targetUserId }, { resetTurnTimer: false });
+    const firstMoverUserId = targetUserId === hostPlayer?.user_id ? guestPlayer?.user_id ?? null : hostPlayer?.user_id ?? null;
+    await persistDraft({ ...draft, target_user_id: targetUserId, first_turn_user_id: firstMoverUserId }, { resetTurnTimer: false });
   };
 
   const setCurrentUserReady = async () => {
@@ -700,6 +739,10 @@ export default function RoomPage() {
 
   const trySelectCharacter = async (sourcePlayer: RoomPlayer, character: PlayerCharacter) => {
     if (!room) return;
+
+    if (draftWriteInFlightRef.current || savingDraft) {
+      return;
+    }
 
     if (phase === "done") {
       setMessage("Драфт уже завершено.");
@@ -1660,6 +1703,12 @@ export default function RoomPage() {
               <p className="mt-1 text-2xl font-medium leading-tight text-white sm:text-3xl lg:text-4xl">{currentStepText}</p>
             </div>
           )}
+
+          {!loading && room && (
+            <div className="mt-4 text-xs font-medium uppercase tracking-[0.16em] text-white/55 md:absolute md:right-0 md:top-0 md:mt-0 md:text-right">
+              {turnTimerText}
+            </div>
+          )}
         </div>
 
         {!loading && room && (
@@ -1675,9 +1724,16 @@ export default function RoomPage() {
                   {isCurrentUserReady ? "Ти готовий" : "ГОТОВИЙ"}
                 </button>
               )}
-              <span className="rounded-lg border border-amber-300/25 bg-amber-400/10 px-3 py-1 text-xs text-amber-100">
-                Таймер ходу: {turnTimerText}
-              </span>
+              <Link href="/" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
+                На головну
+              </Link>
+              <button
+                type="button"
+                onClick={leaveRoom}
+                className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-sm text-red-200 hover:bg-red-500/15"
+              >
+                Вийти з кімнати
+              </button>
               {timerEnabled && hasGuest && waitingForReady && (
                 <span className="rounded-lg border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">
                   Готові: {readyUserIds.length}/2
@@ -1874,22 +1930,6 @@ export default function RoomPage() {
         </div>
 
         {message && <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/85">{message}</div>}
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/room" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
-            До лобі кімнат
-          </Link>
-          <Link href="/" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
-            На головну
-          </Link>
-          <button
-            type="button"
-            onClick={leaveRoom}
-            className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-sm text-red-200 hover:bg-red-500/15"
-          >
-            Вийти з кімнати
-          </button>
-        </div>
       </section>
     </main>
   );

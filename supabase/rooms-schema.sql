@@ -77,41 +77,6 @@ begin
   end if;
 end $$;
 
-create or replace function public.delete_room_if_empty()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if not exists (
-    select 1
-    from public.room_players rp
-    where rp.room_code = old.room_code
-  ) then
-    delete from public.rooms r
-    where r.code = old.room_code;
-  end if;
-
-  return old;
-end;
-$$;
-
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_trigger
-    where tgname = 'room_players_delete_room_if_empty'
-      and tgrelid = 'public.room_players'::regclass
-  ) then
-    create trigger room_players_delete_room_if_empty
-      after delete on public.room_players
-      for each row
-      execute function public.delete_room_if_empty();
-  end if;
-end $$;
-
 create or replace function public.cleanup_stale_rooms(max_age_minutes integer default 180)
 returns integer
 language plpgsql
@@ -318,6 +283,41 @@ create table if not exists public.room_players (
   primary key (room_code, user_id)
 );
 
+create or replace function public.delete_room_if_empty()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (
+    select 1
+    from public.room_players rp
+    where rp.room_code = old.room_code
+  ) then
+    delete from public.rooms r
+    where r.code = old.room_code;
+  end if;
+
+  return old;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_trigger
+    where tgname = 'room_players_delete_room_if_empty'
+      and tgrelid = 'public.room_players'::regclass
+  ) then
+    create trigger room_players_delete_room_if_empty
+      after delete on public.room_players
+      for each row
+      execute function public.delete_room_if_empty();
+  end if;
+end $$;
+
 do $$
 begin
   if to_regclass('public.user_characters') is not null then
@@ -482,3 +482,36 @@ begin
       with check (true);
   end if;
 end $$;
+
+create or replace function public.update_room_draft_state_if_current(
+  room_code text,
+  expected_draft_state jsonb,
+  next_draft_state jsonb
+)
+returns public.rooms
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  updated_room public.rooms%rowtype;
+begin
+  update public.rooms r
+  set draft_state = next_draft_state
+  where r.code = room_code
+    and r.draft_state = expected_draft_state
+    and exists (
+      select 1
+      from public.room_players rp
+      where rp.room_code = r.code
+        and rp.user_id = auth.uid()
+    )
+  returning r.* into updated_room;
+
+  return updated_room;
+end;
+$$;
+
+grant execute on function public.update_room_draft_state_if_current(text, jsonb, jsonb) to authenticated;
+
+notify pgrst, 'reload schema';

@@ -40,14 +40,14 @@ const ABYSS_NOW: {
   chambers: AbyssChamber[];
 } = {
   title: "Безодня зараз",
-  cycle: "2026-04-16 - 2026-05-16",
+  cycle: "2026-05-16 - 2026-06-16",
   floor: "12 поверх",
-  moonBlessingTitle: "Благословення місяця",
+  moonBlessingTitle: "Місяць, що трощить щити",
   moonBlessingText:
-    "Коли активується гармонія місяця, спрацьовує ударна хвиля й завдає справжню шкоду противникам. Ефект може спрацювати раз на 4с.",
+    "Поки активний персонаж захищений щитом, його атаки по ворогах викликають ударну хвилю у ворога, що завдає справжню шкоду. Спрацьовує раз на 3с.",
   stageEffects: {
-    firstHalf: "Шкода місячної-кристалізації +75%",
-    secondHalf: "Шкода нормальних та заряджених атак +75%",
+    firstHalf: "Всі члени загону отримують +75% піро шкоди",
+    secondHalf: "Шкода від місячного цвітіння збільшується на 75%",
   },
   chambers: [
     {
@@ -57,13 +57,13 @@ const ABYSS_NOW: {
         label: "Перша половина",
         enemies: [
           {
-            name: "Преторіанський Голем",
-            icon: "/abyss/mobs/UI_MonsterIcon_Golem_Legion.png",
+            name: "Суперважкий Сухопутний Ровер: Механізована Фортеця",
+            icon: "/abyss/mobs/UI_MonsterIcon_Fatuimecha_AMP.png",
             level: 95,
-            hp: "681,430",
-            hoverTitle: "Всі резисти 10%, під час щиту 60%",
+            hp: "3.747.864",
+            hoverTitle: "Всі резисти 150%, після зняття щита -20%",
             hoverDescription:
-              "Преторіанський Голем захищений гео щитом, який збільшує його резисти проти всіх типів шкоди на 50%. Знищування щита найефективніше фіз/гео атаками. Якщо щит знищено, Преторіанський Голем буде паралізований приблизно на 8 секунд, перш ніж відновить свій щит.",
+              "Має унікальну Шкалу Люті з максимумом 600 очок. При атаці Піро шкала зростає на 5 очок +5 за кожну одиницю Піро-шкали. При 50% заповнення шкали починає перегрів (пластини червоніють) і зменшує всі резисти на 100%. Після повного заповнення шкали він згенерує Кріо щит , який забезпечує імунітет до шкоди, і спробує охолонути за допомогою своєї гармати. Шкала Люті потім не з'являтеметься протягом наступних 18 секунд ",
           },
         ],
       },
@@ -71,28 +71,20 @@ const ABYSS_NOW: {
         label: "Друга половина",
         enemies: [
           {
-            name: "Похмурий Мімезис",
-            icon: "/abyss/mobs/UI_MonsterIcon_TheAbyss_Rhizome.png",
+            name: "Гідро Гілічурл Роуг",
+            icon: "/abyss/mobs/UI_MonsterIcon_Hilistray_Water.png",
             level: 95,
-            hp: "579.215",
-            hoverTitle: "Резисти до всього 10%",
-            hoverDescription: "Вступаючи в бій, приймає форму Тепетлізавра-воїна: Уламкового Страйкера. Має щитом порожнечі, який надає імунітет. Щит матиме міцність 40, яка зменшиться на 1 при враженні елементальною атакою або на 3 при враженні атакою з нічним духом. Коли щит зруйновано, Похмурий Міміфлора ненадовго паралізованим, але через деякий час знову трансформується. При другому і третьому створенні щиту порожнечі міцність щита зменшиться до 20 та 8 відповідно.",
+            hp: "658.291",
+            hoverTitle: "Резисти до всього 10%, до гідро 50%",
+            hoverDescription: "Нічого особливого, якшо чєсна",
           },
           {
-            name: "Похмурий мімезис",
-            icon: "/abyss/mobs/UI_MonsterIcon_TheAbyss_Rhizome.png",
+            name: "Володар Прихованих Глибин: Шепітник Кошмарів",
+            icon: "/abyss/mobs/UI_MonsterIcon_Lloigor_Primo.png",
             level: 95,
-            hp: "749.572",
-            hoverTitle: "Резисти до всього 10%",
-            hoverDescription: "Вступаючи в бій, приймає форму Анемо Хілічурла-розбійника. Має щит порожнечі, який надає імунітет. Щит матиме міцність 70, яка зменшиться на 1 при враженні елементальною атакою або на 3 при враженні атакою з нічним духом. Коли щит зруйновано, Похмурий Міміфлора буде ненадовго паралізованим, але через деякий час знову трансформується. При другому і третьому створенні щиту порожнечі міцність щита зменшиться до 35 та 14 відповідно.",
-          },
-          {
-            name: "Похмурий Мімезис",
-            icon: "/abyss/mobs/UI_MonsterIcon_TheAbyss_Rhizome.png",
-            level: 95,
-            hp: "817.715",
-            hoverTitle: "Резисти до всього 10%",
-            hoverDescription: "Вступаючи в бій, приймає форму Автомата Таємного Джерела: Мисливця-Шукача. Має щит порожнечі, який надає імунітет. Щит матиме міцність 105, яка зменшиться на 1 при враженні елементальною атакою або на 3 при враженні атакою з нічним духом. Коли щит зруйновано, Похмурий Міміфлора буде ненадовго паралізованим, але через деякий час знову трансформується. При другому і третьому створенні щиту порожнечі міцність щита зменшиться до  53 та 21 відповідно.",
+            hp: "5.416.573",
+            hoverTitle: "Резисти до всього 10%, паралізований -60%",
+            hoverDescription: "Реве, телепортується в центр, отримує Глибокотемний Щит (45% макс. HP) і кличе 4 Рибалок. Кожен убитий знімає 25% щита (усі — зносять повністю). Щит б’ється лише Елементальною шкодою (Місячні реакції ×300%). Якщо за ~18с не зламати — поглинає Рибалок і б’є по всій арені (200% ATK як Електро). Якщо зламати вчасно — шкода 20% макс. HP як фізична, -70% резистів, параліч 10 с, Рибалки вмирають.",
           },
         ],
       },
@@ -104,13 +96,28 @@ const ABYSS_NOW: {
         label: "Перша половина",
         enemies: [
           {
-            name: "Дикий мисливець",
-            icon: "/abyss/mobs/UI_MonsterIcon_WildHunt_Elite.png",
-            count: 2,
+            name: "Фатуї Маг Електро Цицин",
+            icon: "/abyss/mobs/UI_MonsterIcon_Fatuus_Summoner_01.png",
             level: 98,
-            hp: "2.008.523",
+            hp: "574.841",
+            hoverTitle: "Всі резисти 10%, електро 50%",
+            hoverDescription: "Нічого особливого, якшо чєсна",
+          },
+                    {
+            name: "Руїн Дрейк: Земляний страж",
+            icon: "/abyss/mobs/UI_MonsterIcon_Gargoyle.png",
+            level: 98,
+            hp: "621.528",
             hoverTitle: "Всі резисти 10%",
-            hoverDescription: "Дикий Мисливець після втрати всього HP не помирає, а переходить у стан «Вражений горем» (або може ввійти в нього раніше через Місячний знак: Сяйво піднесення), де весь отриманий урон зменшує його максимальне HP (65% або 90% при активному ефекті), і коли максимальне HP падає до 0 — він помирає; при звичайному вході (після 0 HP) він одразу втрачає частину максимального HP, нічого не робить і через 10 секунд повністю відновлює HP до нового максимуму, а при ранньому вході продовжує битися, але весь урон одночасно зменшує і поточне, і максимальне HP, причому цей стан можна викликати кілька разів підряд.",
+            hoverDescription: "Нічого особливого, якшо чєсна",
+          },
+                    {
+            name: "Прімо Геовішап",
+            icon: "/abyss/mobs/UI_MonsterIcon_Drake_Primo_Rock.png",
+            level: 98,
+            hp: "3.449.051",
+            hoverTitle: "Всі резисти 10%, гео 50%. Під час паралічу всі резисти -50%. Цей стан 5с",
+            hoverDescription: "Вибухає елементальною хвилею по великій зоні: 100% ATK як поточний елемент, або 25% під щитом. Ігнорує ухилення. Якщо всю шкоду заблоковано — атака відскакує, бос втрачає HP, паралізується і отримує -50% резистів. Гео або збіг елемента — -15% HP; інший не-гео щит — -5% HP. На 20% HP припиняє цю атаку й переходить в іншу фазу.",
           },
         ],
       },
@@ -118,20 +125,12 @@ const ABYSS_NOW: {
         label: "Друга половина",
         enemies: [
           {
-            name: "Квіткова ринг-танцівнця відлюдничка",
-            icon: "/abyss/mobs/UI_MonsterIcon_Eremite_Female_Standard_Dancer.png",
+            name: "Загартований у битвах заземлений геогриб",
+            icon: "/abyss/mobs/UI_MonsterIcon_Fungus_Amanita_Du_Udatta_Rock_Elite.png",
             level: 98,
-            hp: "965.636",
-            hoverTitle: "Резисти до фіз.шкоди -30% в усіх станах, до всього іншого 10%. При посиленому стані резисти 60%. Після стану -50% до дендро ",
-            hoverDescription: "На початку бою вона входить у посилений стан, викликаючи Духа знамення: Дендро змія-духа для допомоги в бою, отримуючи підвищенні резисти і високу стійкість до переривання. Коли цей змій гине, стан завершується, вона отримує чисту дендро-шкоду в розмірі 37,5% від свого поточного HP, після чого оглушується на 10 секунд і має знижений дендро-резист, причому увійти в цей посилений стан вона може лише один раз.",
-          },
-          {
-            name: "Тварь неземена",
-            icon: "/abyss/mobs/UI_MonsterIcon_Samurai_Ningyo.png",
-            level: 96,
-            hp: "2.299.367",
-            hoverTitle: "Резисти до всього 10%",
-            hoverDescription: "Просто гіршого боса годі й шукати. Не буду нічого тут писати, ви і самі все про нього знаєте. Поки встає цей дід проклятий, він шкоди не отримує. А встає він годин 10.",
+            hp: "4.542.352",
+            hoverTitle: "Всі резисти 130%, окрім дендро і гео (150%). Під час паралічу всі резисти -120%.",
+            hoverDescription: "Одразу входить у стан “Підпалений” із шкалою Люті (до 300), що заповнюється Дендро шкодою (15 за кожну одиницю, 10 за 0U). При заповненні стає оглушеним на 16с і шкала спадає на 13с назад у “Підпалений”, додатковий Дендро сповільнює спад, Піро повністю обнуляє. Стани змінюються без обмежень: у “Підпаленому” — використовує снаряди/замах/ривок/удар головою, у звичайному — рев і удар ногою, в активованому — грибний залп.",
           },
         ],
       },
@@ -143,12 +142,12 @@ const ABYSS_NOW: {
         label: "Перша половина",
         enemies: [
           {
-            name: "Сяючий Мунгекко",
-            icon: "/abyss/mobs/UI_MonsterIcon_Magbeast_Gecko.png",
+            name: "Гексадекатонічна загартована в боях мандрагора",
+            icon: "/abyss/mobs/UI_MonsterIcon_Mandragora_Elite.png",
             level: 100,
-            hp: "1,120,000",
-            hoverTitle: "Під час кокону всі резисти 10%, окрім гео (70%). Під час звичайного стану всі резисти 10%",
-            hoverDescription: "Телепортується в центр, створює Якір місячного каменю, купол і дві свої копії. Купол має багатошаровий бар’єр із 9 сегментів, а якір найслабший до фіз і гео шкоди. При знищенні 3-го і 6-го сегментів бос отримує шкоду по 6% від свого макс. HP, при повному руйнуванні бар’єра — 18% і оглушується приблизно на 7 секунд. Якщо ж бар’єр не зламати за 25 секунд, Місячний гекон зникає, перевантажує якір і викликає вибух, що завдає 200% ATK гео-шкоди по полю боя. Після цього випускає вибух куувакі, знімаючи всім поруч HP у розмірі 10% від макс. HP + 1800 та накладаючи сяйливий кокон. Цей кокон знижує шанс криту на 100%, шкоду на 50% і отримуване лікування на 40%, але коли персонажа відхилюють до 100% HP, ефект зникає й дає «Розплутаність» (+15% криту і +50% шкоди на 15 с). У цей момент Місячний гекон на секунду хитається і отримує -60% гео резистів.",
+            hp: "3.549.441",
+            hoverTitle: "Всі резисти 80%, окрім дендро (205%). Під час знедоленого стану - 10% до всього і 135% до дендро",
+            hoverDescription: "Під час початку бою або після “Квіткового вибуху спор” Мандрагора отримує повну шкалу Люті (спадає за 35 с). Піро й Електро скорочують час спадання 1с, 0U удари — 0,15. Коли шкала порожня — використовує “Квітковий вибух спор” (але не може при <4% HP і тоді не отримує шкалу). Виконує “танець”, заривається в землю, створює “Міні-мандрагор” (по 2% HP, до 10 шт) і знову отримує повну шкалу Люті (17 с). Коли шкала закінчується — мініки зливаються назад. Якщо злилось ≤2 або всіх мініків вбито до цього — Мандрагора падає, паралізується на 6 с і входить у знедолений стан до наступного “Квіткового вибуху спор”.",
           },
         ],
       },
@@ -156,12 +155,20 @@ const ABYSS_NOW: {
         label: "Друга половина",
         enemies: [
           {
-            name: "Тенеброзна папіла: Тип II",
-            icon: "/abyss/mobs/UI_MonsterIcon_TheAbyss_Dendrite.png",
+            name: "Страж Руїн",
+            icon: "/abyss/mobs/UI_MonsterIcon_Defender_Noner_01.png",
             level: 100,
-            hp: "3.327.601",
-            hoverTitle: "Тип II: Магу Кенкі, Прімо Геовішап, електро, кріо і гідро гіпостазиси. Резисти залежать від станів. (читати нижче)",
-            hoverDescription: "Одразу в центрі арени накладає щит порожнечі, міцністю 72. Стихійна навичка зменшує міцність щита на 1, а атаки з нічним духом - на 3. Якщо щит не зруйновано, Папіла випускає вибух, завдаючи 300% АТК як фіз шкоду. Знищення щита паралізує її і резисти зменшуються до 0%. Після цієї паралізації резисти збільшуються на 35% до всього.",
+            hp: "965 084",
+            hoverTitle: "Всі резисти 10%",
+            hoverDescription: "Нічого особливого, якшо чєсна",
+          },
+          {
+            name: "Побитий у боях кам’яний краб",
+            icon: "/abyss/mobs/UI_MonsterIcon_HermitCrab_Mature_Elite.png",
+            level: 100,
+            hp: "4.025.383",
+            hoverTitle: "Щит 210% резистів, паралізований -30%, звичайний стан 10%, якщо не знищити щит - 80%.",
+            hoverDescription: "Летить у центр арени й створює щит, одночасно запускаючи нові насіння по три в візерунку. Якщо не перервати — заряджає атаку, яка підриває всі насіння (по 100% ATK як Гідро), і виходить з захищеного стану з підвищеними всіма резистами 80%. Щоб зламати щит і збити заряд, треба реакціями “Цвітіння” вдарити краба сумарно 6 насіннями. Тоді він виходить із заряджання і стає оглушеним на 5с",
           },
         ],
       },
@@ -352,14 +359,14 @@ export default function Home() {
 
           <p className="mt-4 rounded-2xl border border-white/10 bg-black/15 p-4 text-sm text-white/75">{ABYSS_NOW.moonBlessingText}</p>
 
-          <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-3">
+          <div className="mt-4 rounded-2xl border border-violet-200/15 bg-violet-950/15 p-3">
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200/90">Ефекти безодні</p>
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-slate-900/35 p-3">
+              <div className="rounded-xl border border-violet-200/15 bg-violet-950/25 p-3">
                 <p className="text-sm font-semibold">Перша половина</p>
                 <p className="mt-1 text-sm text-white/75">{ABYSS_NOW.stageEffects.firstHalf}</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/35 p-3">
+              <div className="rounded-xl border border-violet-200/15 bg-violet-950/25 p-3">
                 <p className="text-sm font-semibold">Друга половина</p>
                 <p className="mt-1 text-sm text-white/75">{ABYSS_NOW.stageEffects.secondHalf}</p>
               </div>
@@ -367,31 +374,35 @@ export default function Home() {
           </div>
 
           <div className="mt-5 space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-              <p className="text-sm font-semibold">Перша половина</p>
+            <div className="p-0">
+              <p className="text-lg font-semibold text-violet-100 md:text-xl">Перша половина</p>
               <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {ABYSS_NOW.chambers.map((chamber) => (
-                  <article key={`${chamber.id}-first`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
+                  <article key={`${chamber.id}-first`} className="rounded-2xl border border-violet-200/15 bg-violet-950/15 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-sm font-normal">Зала {chamber.id}</p>
-                      <p className="text-xs text-white/60">{chamber.completion}</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {chamber.firstHalf.enemies.map((enemy) => (
                         <div key={`${chamber.id}-first-${enemy.name}`} className="group relative">
-                          <div className="flex h-[160px] w-full min-w-0 flex-col rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center">
+                          <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-violet-200/20 bg-violet-950/35 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                            {enemy.count ? (
+                              <span className="absolute right-2 top-2 rounded-full border border-violet-300/25 bg-violet-400/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-violet-100">
+                                x{enemy.count}
+                              </span>
+                            ) : null}
                             <div className="mx-auto h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-white/10">
                               <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
                             </div>
-                            <p className="mt-auto min-h-[20px] text-xs font-normal leading-tight">{enemy.name}</p>
-                            <p className="mt-auto text-[0.68rem] text-white/80">Lv.{enemy.level}</p>
-                            <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
+                            <p
+                              className="mt-2 h-8 max-w-full overflow-hidden text-xs font-semibold leading-tight"
+                              style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2 }}
+                            >
+                              {enemy.name}
+                            </p>
+                            <p className="mt-1 text-[0.68rem] text-white/80">Lv.{enemy.level}</p>
+                            <div className="mt-1 flex max-w-full flex-wrap items-center justify-center gap-2 text-xs text-white/70">
                               <span>HP {enemy.hp}</span>
-                              {enemy.count ? (
-                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-medium text-violet-100">
-                                  x{enemy.count}
-                                </span>
-                              ) : null}
                             </div>
                           </div>
 
@@ -412,31 +423,35 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-              <p className="text-sm font-semibold">Друга половина</p>
+            <div className="p-0">
+              <p className="text-lg font-semibold text-violet-100 md:text-xl">Друга половина</p>
               <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {ABYSS_NOW.chambers.map((chamber) => (
-                  <article key={`${chamber.id}-second`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
+                  <article key={`${chamber.id}-second`} className="rounded-2xl border border-violet-200/15 bg-violet-950/15 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-sm font-normal">Зала {chamber.id}</p>
-                      <p className="text-xs text-white/60">{chamber.completion}</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {chamber.secondHalf.enemies.map((enemy) => (
                         <div key={`${chamber.id}-second-${enemy.name}`} className="group relative">
-                          <div className="flex h-[160px] w-full min-w-0 flex-col rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center">
+                          <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-violet-200/20 bg-violet-950/35 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                            {enemy.count ? (
+                              <span className="absolute right-2 top-2 rounded-full border border-violet-300/25 bg-violet-400/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-violet-100">
+                                x{enemy.count}
+                              </span>
+                            ) : null}
                             <div className="mx-auto h-14 w-14 overflow-hidden rounded-xl border border-white/10 bg-white/10">
                               <img src={enemy.icon} alt={enemy.name} className="h-full w-full object-cover" />
                             </div>
-                            <p className="mt-auto min-h-[20px] text-xs font-normal leading-tight">{enemy.name}</p>
-                            <p className="mt-auto text-[0.68rem] text-white/80">Lv.{enemy.level}</p>
-                            <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
+                            <p
+                              className="mt-2 h-8 max-w-full overflow-hidden text-xs font-semibold leading-tight"
+                              style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2 }}
+                            >
+                              {enemy.name}
+                            </p>
+                            <p className="mt-1 text-[0.68rem] text-white/80">Lv.{enemy.level}</p>
+                            <div className="mt-1 flex max-w-full flex-wrap items-center justify-center gap-2 text-xs text-white/70">
                               <span>HP {enemy.hp}</span>
-                              {enemy.count ? (
-                                <span className="rounded-full border border-violet-300/25 bg-violet-400/15 px-2 py-0.5 font-medium text-violet-100">
-                                  x{enemy.count}
-                                </span>
-                              ) : null}
                             </div>
                           </div>
 
