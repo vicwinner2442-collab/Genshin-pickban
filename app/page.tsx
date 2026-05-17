@@ -359,14 +359,14 @@ export default function Home() {
 
           <p className="mt-4 rounded-2xl border border-white/10 bg-black/15 p-4 text-sm text-white/75">{ABYSS_NOW.moonBlessingText}</p>
 
-          <div className="mt-4 rounded-2xl border border-violet-200/15 bg-violet-950/15 p-3">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200/90">Ефекти безодні</p>
+          <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/80">Ефекти безодні</p>
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl border border-violet-200/15 bg-violet-950/25 p-3">
+              <div className="rounded-xl border border-white/10 bg-slate-900/35 p-3">
                 <p className="text-sm font-semibold">Перша половина</p>
                 <p className="mt-1 text-sm text-white/75">{ABYSS_NOW.stageEffects.firstHalf}</p>
               </div>
-              <div className="rounded-xl border border-violet-200/15 bg-violet-950/25 p-3">
+              <div className="rounded-xl border border-white/10 bg-slate-900/35 p-3">
                 <p className="text-sm font-semibold">Друга половина</p>
                 <p className="mt-1 text-sm text-white/75">{ABYSS_NOW.stageEffects.secondHalf}</p>
               </div>
@@ -375,19 +375,19 @@ export default function Home() {
 
           <div className="mt-5 space-y-4">
             <div className="p-0">
-              <p className="text-lg font-semibold text-violet-100 md:text-xl">Перша половина</p>
+              <p className="text-lg font-semibold text-white md:text-xl">Перша половина</p>
               <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {ABYSS_NOW.chambers.map((chamber) => (
-                  <article key={`${chamber.id}-first`} className="rounded-2xl border border-violet-200/15 bg-violet-950/15 p-4">
+                  <article key={`${chamber.id}-first`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-sm font-normal">Зала {chamber.id}</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {chamber.firstHalf.enemies.map((enemy) => (
                         <div key={`${chamber.id}-first-${enemy.name}`} className="group relative">
-                          <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-violet-200/20 bg-violet-950/35 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                          <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                             {enemy.count ? (
-                              <span className="absolute right-2 top-2 rounded-full border border-violet-300/25 bg-violet-400/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-violet-100">
+                              <span className="absolute right-2 top-2 rounded-full border border-white/15 bg-white/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white/80">
                                 x{enemy.count}
                               </span>
                             ) : null}
@@ -412,7 +412,7 @@ export default function Home() {
                               Lv. {enemy.level} · HP: {enemy.hp}
                               {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
                             </p>
-                            <p className="mt-2 text-[11px] font-semibold text-violet-200">{enemy.hoverTitle}</p>
+                            <p className="mt-2 text-[11px] font-semibold text-cyan-100/85">{enemy.hoverTitle}</p>
                             <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
                           </div>
                         </div>
@@ -424,19 +424,19 @@ export default function Home() {
             </div>
 
             <div className="p-0">
-              <p className="text-lg font-semibold text-violet-100 md:text-xl">Друга половина</p>
+              <p className="text-lg font-semibold text-white md:text-xl">Друга половина</p>
               <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {ABYSS_NOW.chambers.map((chamber) => (
-                  <article key={`${chamber.id}-second`} className="rounded-2xl border border-violet-200/15 bg-violet-950/15 p-4">
+                  <article key={`${chamber.id}-second`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-sm font-normal">Зала {chamber.id}</p>
                     </div>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {chamber.secondHalf.enemies.map((enemy) => (
                         <div key={`${chamber.id}-second-${enemy.name}`} className="group relative">
-                          <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-violet-200/20 bg-violet-950/35 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                          <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                             {enemy.count ? (
-                              <span className="absolute right-2 top-2 rounded-full border border-violet-300/25 bg-violet-400/15 px-1.5 py-0.5 text-[10px] font-medium leading-none text-violet-100">
+                              <span className="absolute right-2 top-2 rounded-full border border-white/15 bg-white/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white/80">
                                 x{enemy.count}
                               </span>
                             ) : null}
@@ -461,7 +461,7 @@ export default function Home() {
                               Lv. {enemy.level} · HP: {enemy.hp}
                               {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
                             </p>
-                            <p className="mt-2 text-[11px] font-semibold text-violet-200">{enemy.hoverTitle}</p>
+                            <p className="mt-2 text-[11px] font-semibold text-cyan-100/85">{enemy.hoverTitle}</p>
                             <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
                           </div>
                         </div>
