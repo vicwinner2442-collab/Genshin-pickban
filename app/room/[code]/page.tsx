@@ -5,6 +5,7 @@ import Link from "next/link";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AbyssNowPanel } from "../../components/AbyssNowPanel";
 import { getCharacterImageUrl } from "../../../lib/character-image";
 import { supabase } from "../../../lib/supabase";
 
@@ -1928,6 +1929,8 @@ export default function RoomPage() {
             </div>
           )}
         </div>
+
+        <AbyssNowPanel className="mt-4" collapsible defaultOpen={false} />
 
         {message && <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/85">{message}</div>}
       </section>

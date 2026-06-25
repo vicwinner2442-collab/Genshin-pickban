@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { AbyssNowPanel } from "../components/AbyssNowPanel";
 import { supabase } from "../../lib/supabase";
 
 type AppUser = {
@@ -371,6 +372,8 @@ export default function RoomLobbyPage() {
         </div>
 
         {message && <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/85">{message}</div>}
+
+        <AbyssNowPanel className="mt-6" collapsible defaultOpen={false} />
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
