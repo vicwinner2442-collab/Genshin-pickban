@@ -93,7 +93,7 @@ function AbyssHalfGrid({ title, half }: { title: string; half: "firstHalf" | "se
                     </div>
                   </div>
 
-                  <div className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-40 hidden max-h-[min(70vh,620px)] w-[min(92vw,520px)] -translate-x-1/2 overflow-y-auto rounded-xl border border-white/10 bg-[#09122b]/95 p-4 text-left shadow-2xl group-hover:block">
+                  <div className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-40 hidden max-h-[min(70vh,620px)] w-[min(92vw,520px)] max-w-[calc(100vw-24px)] -translate-x-1/2 overflow-y-auto rounded-xl border border-white/10 bg-[#09122b]/95 p-4 text-left shadow-2xl group-hover:block sm:left-auto sm:right-0 sm:translate-x-0 sm:origin-top-right md:left-1/2 md:-translate-x-1/2 md:origin-top-center">
                     <p className="text-xs font-semibold">{enemy.name}</p>
                     <p className="mt-1 text-[11px] text-white/70">
                       Lv. {enemy.level} · HP: {enemy.hp}
