@@ -61,15 +61,15 @@ export function AbyssNowPanel({ className = "", defaultOpen = true, collapsible 
 
 function AbyssHalfGrid({ title, half }: { title: string; half: "firstHalf" | "secondHalf" }) {
   return (
-    <div className="min-w-0 p-0">
+    <div className="p-0">
       <p className="text-lg font-semibold text-white md:text-xl">{title}</p>
-      <div className="mt-3 grid min-w-0 max-w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {ABYSS_NOW.chambers.map((chamber) => (
-          <article key={`${chamber.id}-${half}`} className="min-w-0 rounded-2xl border border-white/10 bg-slate-900/35 p-4">
+          <article key={`${chamber.id}-${half}`} className="rounded-2xl border border-white/10 bg-slate-900/35 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-normal">Зала {chamber.id}</p>
             </div>
-            <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {chamber[half].enemies.map((enemy) => (
                 <div key={`${chamber.id}-${half}-${enemy.name}`} className="group relative">
                   <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
