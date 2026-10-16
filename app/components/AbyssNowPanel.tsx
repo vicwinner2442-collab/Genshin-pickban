@@ -1,4 +1,5 @@
 import { ABYSS_NOW } from "../../lib/abyss-now";
+import { ViewportTooltip } from "./ViewportTooltip";
 
 type AbyssNowPanelProps = {
   className?: string;
@@ -71,7 +72,20 @@ function AbyssHalfGrid({ title, half }: { title: string; half: "firstHalf" | "se
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {chamber[half].enemies.map((enemy) => (
-                <div key={`${chamber.id}-${half}-${enemy.name}`} className="group relative">
+                <ViewportTooltip
+                  key={`${chamber.id}-${half}-${enemy.name}`}
+                  content={(
+                    <>
+                      <p className="text-xs font-semibold">{enemy.name}</p>
+                      <p className="mt-1 text-[11px] text-white/70">
+                        Lv. {enemy.level} · HP: {enemy.hp}
+                        {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
+                      </p>
+                      <p className="mt-2 text-[11px] font-semibold text-cyan-100/85">{enemy.hoverTitle}</p>
+                      <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
+                    </>
+                  )}
+                >
                   <div className="relative flex h-[170px] w-full min-w-0 flex-col items-center rounded-2xl border border-white/15 bg-slate-900/55 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                     {enemy.count ? (
                       <span className="absolute right-2 top-2 rounded-full border border-white/15 bg-white/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white/80">
@@ -92,17 +106,7 @@ function AbyssHalfGrid({ title, half }: { title: string; half: "firstHalf" | "se
                       <span>HP {enemy.hp}</span>
                     </div>
                   </div>
-
-                  <div className="pointer-events-none absolute bottom-[calc(100%+10px)] left-1/2 z-40 hidden max-h-[min(70vh,620px)] w-[min(92vw,520px)] max-w-[calc(100vw-24px)] -translate-x-1/2 overflow-y-auto rounded-xl border border-white/10 bg-[#09122b]/95 p-4 text-left shadow-2xl group-hover:block sm:left-auto sm:right-0 sm:translate-x-0 sm:origin-top-right md:left-1/2 md:-translate-x-1/2 md:origin-top-center">
-                    <p className="text-xs font-semibold">{enemy.name}</p>
-                    <p className="mt-1 text-[11px] text-white/70">
-                      Lv. {enemy.level} · HP: {enemy.hp}
-                      {enemy.count ? ` · Кількість: ${enemy.count}` : ""}
-                    </p>
-                    <p className="mt-2 text-[11px] font-semibold text-cyan-100/85">{enemy.hoverTitle}</p>
-                    <p className="mt-1 text-xs leading-6 text-white/75">{enemy.hoverDescription}</p>
-                  </div>
-                </div>
+                </ViewportTooltip>
               ))}
             </div>
           </article>
