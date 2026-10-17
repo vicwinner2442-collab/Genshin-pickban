@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ResponsiveFilters } from "../../components/ResponsiveFilters";
 import { AbyssNowPanel } from "../../components/AbyssNowPanel";
 import { getCharacterImageUrl } from "../../../lib/character-image";
 import { supabase } from "../../../lib/supabase";
@@ -13,7 +14,8 @@ type DraftMode = "single_roster" | "dual_roster";
 type TurnRole = "host" | "guest";
 type DraftPhase = "immunity" | "ban" | "pick" | "done";
 const IMMUNE_PICK_SLOT_INDEXES = [3, 7] as const;
-const DUAL_ROSTER_PICK_STEP_COUNTS = [1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 1] as const;
+// Each set of eight uses 1–2–2–2–1; the second set starts with the other player.
+const DUAL_ROSTER_PICK_STEP_COUNTS = [1, 2, 2, 2, 1, 1, 2, 2, 2, 1] as const;
 const SINGLE_ROSTER_PICK_TURNS: TurnRole[] = ["guest", "host", "host", "guest", "guest", "host", "host", "guest"];
 const ELEMENTS = ["Піро", "Гідро", "Кріо", "Електро", "Анемо", "Гео", "Дендро"] as const;
 const RARITIES = ["5", "4"] as const;
@@ -25,21 +27,6 @@ const SORT_OPTIONS = [
 ] as const;
 type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 const DEFAULT_SORT: SortOption = "level_desc";
-
-const DUAL_ROSTER_PICK_TURNS: Array<{ role: TurnRole; count: number }> = [
-  { role: "host", count: 1 },
-  { role: "guest", count: 2 },
-  { role: "host", count: 2 },
-  { role: "guest", count: 1 },
-  { role: "host", count: 1 },
-  { role: "guest", count: 1 },
-  { role: "host", count: 2 },
-  { role: "guest", count: 2 },
-  { role: "host", count: 1 },
-  { role: "guest", count: 1 },
-  { role: "host", count: 1 },
-  { role: "guest", count: 1 },
-];
 
 type Room = {
   code: string;
@@ -304,6 +291,7 @@ export default function RoomPage() {
   const [players, setPlayers] = useState<RoomPlayer[]>([]);
   const [playerCharacters, setPlayerCharacters] = useState<Record<string, PlayerCharacter[]>>({});
   const [rosterFiltersByPlayer, setRosterFiltersByPlayer] = useState<Record<string, RosterFilters>>({});
+  const [mobileDraftView, setMobileDraftView] = useState<"characters" | "selections">("characters");
   const [loading, setLoading] = useState(true);
   const [savingDraft, setSavingDraft] = useState(false);
   const [message, setMessage] = useState("");
@@ -311,6 +299,8 @@ export default function RoomPage() {
   const [nowTs, setNowTs] = useState<number>(() => Date.now());
   const autoTurnLockRef = useRef<string>("");
   const draftWriteInFlightRef = useRef(false);
+  const loadedParticipantsRef = useRef<string | null>(null);
+  const participantsSyncInFlightRef = useRef(false);
 
   const isHost = room?.host_user_id === userId;
 
@@ -462,11 +452,7 @@ export default function RoomPage() {
   }, [draftMode, phase, draft.picks.length, dualRosterPickTurns]);
 
   const turnRole: TurnRole | null = useMemo(() => {
-    if (phase === "done") return null;
-
-    if (!hasGuest) {
-      return "host";
-    }
+    if (phase === "done" || !hostPlayer || !hasGuest) return null;
 
     if (phase === "immunity") {
       return draft.immunities.length % 2 === 0 ? firstTurnRole : oppositeTurnRole;
@@ -484,6 +470,7 @@ export default function RoomPage() {
   }, [
     phase,
     hasGuest,
+    hostPlayer,
     draft.immunities.length,
     draft.bans.length,
     draft.picks.length,
@@ -741,6 +728,11 @@ export default function RoomPage() {
   const trySelectCharacter = async (sourcePlayer: RoomPlayer, character: PlayerCharacter) => {
     if (!room) return;
 
+    if (!hostPlayer || !hasGuest) {
+      setMessage("Спочатку дочекайся другого гравця.");
+      return;
+    }
+
     if (draftWriteInFlightRef.current || savingDraft) {
       return;
     }
@@ -877,7 +869,7 @@ export default function RoomPage() {
     setMessage("Імуни/бани/піки скинуто.");
   };
 
-  const loadRoom = async () => {
+  const loadRoom = async ({ joinIfAvailable = false }: { joinIfAvailable?: boolean } = {}) => {
     setLoading(true);
     setMessage("");
 
@@ -942,7 +934,37 @@ export default function RoomPage() {
       return;
     }
 
-    const playersList = roomPlayers ?? [];
+    let playersList = roomPlayers ?? [];
+    if (joinIfAvailable && !playersList.some((player) => player.user_id === user.id)) {
+      if (playersList.length >= 2) {
+        setMessage("У кімнаті вже два гравці. Ви переглядаєте драфт як глядач.");
+      } else {
+        const { error: joinError } = await supabase.from("room_players").upsert(
+          {
+            room_code: roomCode,
+            user_id: user.id,
+            role: user.id === roomData.host_user_id ? "host" : "guest",
+            display_name: user.user_metadata?.nickname ?? user.user_metadata?.display_name ?? user.id.slice(0, 8),
+          },
+          { onConflict: "room_code,user_id", ignoreDuplicates: true }
+        );
+        if (joinError) {
+          setMessage(`Не вдалося приєднатися до кімнати: ${formatRoomError(joinError)}`);
+        } else {
+          const { data: joinedPlayers, error: joinedPlayersError } = await supabase.from("room_players")
+            .select("user_id, display_name, role, created_at")
+            .eq("room_code", roomCode).order("created_at", { ascending: true });
+          if (joinedPlayersError) {
+            setMessage(formatRoomError(joinedPlayersError));
+          } else {
+            playersList = joinedPlayers ?? [];
+            if (!playersList.some((player) => player.user_id === user.id)) {
+              setMessage("Не вдалося підтвердити приєднання до кімнати. Спробуйте зайти через код кімнати.");
+            }
+          }
+        }
+      }
+    }
     const ids = playersList.map((player) => player.user_id);
     let profileById = new Map<string, string>();
 
@@ -1000,6 +1022,23 @@ export default function RoomPage() {
     }
 
     setLoading(false);
+    loadedParticipantsRef.current = `${roomCode}:${[...ids].sort().join(",")}`;
+  };
+
+  const syncParticipantsFromServer = async () => {
+    if (!roomCode || loadedParticipantsRef.current === null || participantsSyncInFlightRef.current) return;
+    participantsSyncInFlightRef.current = true;
+    try {
+      const { data, error } = await supabase.from("room_players").select("user_id").eq("room_code", roomCode);
+      if (error || !data) return;
+      const participantKey = `${roomCode}:${data.map((player) => player.user_id).sort().join(",")}`;
+      if (participantKey !== loadedParticipantsRef.current) {
+        // Reload names and rosters along with membership, including after missed realtime events.
+        await loadRoom();
+      }
+    } finally {
+      participantsSyncInFlightRef.current = false;
+    }
   };
 
   const syncDraftFromServer = async () => {
@@ -1036,7 +1075,8 @@ export default function RoomPage() {
 
   useEffect(() => {
     if (!roomCode) return;
-    loadRoom();
+    loadedParticipantsRef.current = null;
+    void loadRoom({ joinIfAvailable: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode]);
 
@@ -1045,6 +1085,7 @@ export default function RoomPage() {
 
     const timer = window.setInterval(() => {
       void syncDraftFromServer();
+      void syncParticipantsFromServer();
     }, 2000);
 
     return () => {
@@ -1080,11 +1121,18 @@ export default function RoomPage() {
             }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_players", filter: `room_code=eq.${roomCode}` },
+        () => { void syncParticipantsFromServer(); }
+      )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
+    // Membership refresh compares IDs through refs; the subscription follows the room.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode, immunityCount, banLimit, pickLimit]);
 
   const leaveRoom = async () => {
@@ -1106,6 +1154,7 @@ export default function RoomPage() {
   };
 
   const currentStepText = useMemo(() => {
+    if (!hostPlayer || !hasGuest) return "Очікуємо другого гравця";
     if (waitingForReady) return "Очікуємо готовність";
     if (phase === "done") return "Драфт завершено";
     if (!turnRole) return "Очікування гравців";
@@ -1119,6 +1168,7 @@ export default function RoomPage() {
 
     return `${actorName} ходить${repeatHint}`;
   }, [
+    hasGuest,
     waitingForReady,
     phase,
     turnRole,
@@ -1151,12 +1201,13 @@ export default function RoomPage() {
   }, [hasGuest, turnSecondsForCurrentPhase, draft.turn_started_at, phase, nowTs, waitingForReady]);
 
   const turnTimerText = useMemo(() => {
+    if (!hostPlayer || !hasGuest) return "Очікуємо другого гравця";
     if (waitingForReady) return "Очікуємо готовність";
     if (turnTimerRemaining === null) return "Без таймера";
     const mins = Math.floor(turnTimerRemaining / 60);
     const secs = turnTimerRemaining % 60;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  }, [turnTimerRemaining, waitingForReady]);
+  }, [hostPlayer, hasGuest, turnTimerRemaining, waitingForReady]);
 
   const currentTurnKey = useMemo(
     () =>
@@ -1226,21 +1277,20 @@ export default function RoomPage() {
       filters.search.trim().length > 0 || filters.element !== "all" || filters.rarity !== "all" || filters.sort !== DEFAULT_SORT;
 
     return (
-      <div
-        className={`grid gap-2 ${
-          compact
-            ? "grid-cols-1 sm:grid-cols-[minmax(72px,1fr)_86px_76px_58px_34px]"
-            : "grid-cols-1 sm:grid-cols-[minmax(120px,1fr)_112px_116px_78px_40px]"
-        }`}
-      >
+      <ResponsiveFilters
+        active={hasFilters}
+        className={compact ? "lg:grid-cols-[minmax(72px,1fr)_86px_76px_58px_36px]" : "lg:grid-cols-[minmax(120px,1fr)_112px_116px_78px_36px]"}
+        search={(
         <input
           type="text"
           value={filters.search}
           onChange={(event) => updateRosterFilters(playerId, { search: event.target.value })}
           placeholder="Пошук"
           aria-label="Пошук персонажа за іменем"
-          className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none placeholder:text-white/35`}
+          className={`h-11 px-3 text-sm lg:h-9 lg:text-xs min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none placeholder:text-white/35`}
         />
+        )}
+      >
         <div className="relative min-w-0">
           <span
             className={`pointer-events-none absolute inset-y-0 left-2 flex items-center truncate text-white ${
@@ -1254,7 +1304,7 @@ export default function RoomPage() {
             onChange={(event) => updateRosterFilters(playerId, { sort: event.target.value as SortOption })}
             aria-label="Сортування ростеру"
             title="Сортування ростеру"
-            className={`${compact ? "h-9 px-1.5 text-[11px]" : "h-10 px-2 text-xs"} w-full min-w-0 rounded-lg border border-white/10 bg-white/10 text-transparent outline-none`}
+            className={`h-11 px-2 text-sm lg:h-9 lg:text-xs w-full min-w-0 rounded-lg border border-white/10 bg-white/10 text-transparent outline-none`}
           >
             {SORT_OPTIONS.map((option) => (
               <option className="bg-slate-900 text-white" key={option.value} value={option.value}>
@@ -1267,7 +1317,7 @@ export default function RoomPage() {
           value={filters.element}
           onChange={(event) => updateRosterFilters(playerId, { element: event.target.value })}
           aria-label="Фільтр за елементом"
-          className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none`}
+          className={`h-11 px-2 text-sm lg:h-9 lg:text-xs min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none`}
         >
           <option className="bg-slate-900 text-white" value="all">
             Елемент
@@ -1282,7 +1332,7 @@ export default function RoomPage() {
           value={filters.rarity}
           onChange={(event) => updateRosterFilters(playerId, { rarity: event.target.value })}
           aria-label="Фільтр за рідкістю"
-          className={`${compact ? "h-9 px-2 text-xs" : "h-10 px-3 text-sm"} min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none`}
+          className={`h-11 px-2 text-sm lg:h-9 lg:text-xs min-w-0 rounded-lg border border-white/10 bg-white/10 text-white outline-none`}
         >
           <option className="bg-slate-900 text-white" value="all">
             ★
@@ -1299,11 +1349,11 @@ export default function RoomPage() {
           disabled={!hasFilters}
           title="Скинути фільтри"
           aria-label="Скинути фільтри ростеру"
-          className={`${compact ? "h-9 w-9" : "h-10 w-10"} rounded-lg border border-white/15 bg-white/10 text-base font-semibold text-white/80 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40`}
+          className={`h-11 min-w-11 lg:h-9 lg:min-w-9 rounded-lg border border-white/15 bg-white/10 text-base font-semibold text-white/80 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40`}
         >
           ↺
         </button>
-      </div>
+      </ResponsiveFilters>
     );
   };
 
@@ -1365,6 +1415,9 @@ export default function RoomPage() {
                     (selection) => selection.source_user_id === player.user_id && selection.character_slug === item.slug
                   );
                 const isDisabled =
+                  !hostPlayer ||
+                  !hasGuest ||
+                  waitingForReady ||
                   isUsed ||
                   savingDraft ||
                   phase === "done" ||
@@ -1551,6 +1604,9 @@ export default function RoomPage() {
                 isImmuneCharacter &&
                 draft.picks.some((selection) => selection.source_user_id === player.user_id && selection.character_slug === item.slug);
               const isDisabled =
+                !hostPlayer ||
+                !hasGuest ||
+                waitingForReady ||
                 isUsed ||
                 savingDraft ||
                 phase === "done" ||
@@ -1681,36 +1737,90 @@ export default function RoomPage() {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_10%_0%,_rgba(56,189,248,0.16),_transparent_32%),radial-gradient(circle_at_90%_6%,_rgba(167,139,250,0.18),_transparent_34%),linear-gradient(to_bottom,_#070b14,_#0b1222,_#0a1020)] px-4 py-8 text-white sm:px-6 xl:px-10">
-      <section className="mx-auto w-full max-w-[1800px] rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_90px_rgba(3,7,18,0.55)] backdrop-blur md:p-7 xl:p-8">
-        <div className="relative min-h-[108px] md:min-h-[92px]">
+    <main className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_0%,_rgba(56,189,248,0.16),_transparent_32%),radial-gradient(circle_at_90%_6%,_rgba(167,139,250,0.18),_transparent_34%),linear-gradient(to_bottom,_#070b14,_#0b1222,_#0a1020)] px-4 py-8 text-white sm:px-6 xl:px-10">
+      <section className="mx-auto w-full max-w-[1800px] rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-[0_24px_90px_rgba(3,7,18,0.55)] backdrop-blur md:p-7 xl:p-8">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] xl:items-start">
           <div>
             <p className="text-sm uppercase tracking-[0.22em] text-violet-200/80">Кімната</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="mt-3 flex items-center gap-2">
               <h1 className="text-2xl font-bold md:text-3xl">Код: {roomCode || "—"}</h1>
               <button
                 type="button"
                 onClick={copyCode}
-                className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm hover:bg-white/15"
+                aria-label="Скопіювати код"
+                title="Скопіювати код"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 xl:size-8"
               >
-                Скопіювати код
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="12" height="12" rx="2" />
+                  <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+                </svg>
               </button>
             </div>
           </div>
 
           {!loading && room && (
-            <div className="mt-4 px-1 py-2 text-center md:absolute md:left-1/2 md:top-4 md:mt-0 md:w-[min(720px,48vw)] md:-translate-x-1/2">
+            <div className="hidden min-w-0 px-1 py-2 text-center xl:block">
               <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/65">Поточний крок</p>
-              <p className="mt-1 text-2xl font-medium leading-tight text-white sm:text-3xl lg:text-4xl">{currentStepText}</p>
+              <p className="mt-1 break-words text-2xl font-medium leading-tight text-white xl:text-3xl">{currentStepText}</p>
             </div>
           )}
 
-          {!loading && room && (
-            <div className="mt-4 text-xs font-medium uppercase tracking-[0.16em] text-white/55 md:absolute md:right-0 md:top-0 md:mt-0 md:text-right">
-              {turnTimerText}
-            </div>
-          )}
+          <div className="row-start-1 flex flex-col items-end gap-3 justify-self-end sm:col-start-2 xl:col-start-3">
+            <Link href="/" className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15 xl:min-h-8 xl:px-3 xl:py-1 xl:text-xs">
+              На головну
+            </Link>
+            {!loading && room && (
+              <div className="hidden max-w-48 text-right text-xs font-medium uppercase tracking-[0.16em] text-white/55 xl:block">
+                {turnTimerText}
+              </div>
+            )}
+          </div>
         </div>
+
+        {!loading && room && (
+          <div className="sticky top-0 z-40 -mx-1 mt-4 rounded-2xl border border-white/15 bg-[#10182b]/95 p-3 shadow-lg backdrop-blur-md xl:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-widest text-cyan-100/60">Поточний крок</p>
+                <p className="break-words text-base font-semibold leading-snug">{currentStepText}</p>
+              </div>
+              <p className="max-w-[40%] shrink-0 text-right text-xs font-medium text-cyan-100/80">{turnTimerText}</p>
+            </div>
+            {timerEnabled && hasGuest && !bothPlayersReady && myRole !== "observer" && (
+              <button type="button" onClick={() => void setCurrentUserReady()} disabled={savingDraft || isCurrentUserReady} className="mt-3 min-h-11 xl:min-h-8 w-full rounded-xl border border-emerald-200/50 bg-emerald-500/25 px-4 text-sm font-semibold text-emerald-50 disabled:opacity-50">
+                {isCurrentUserReady ? "Ти готовий" : "ГОТОВИЙ"} · {readyUserIds.length}/2
+              </button>
+            )}
+            <div role="tablist" aria-label="Розділи драфту" className="mt-3 grid grid-cols-2 gap-2">
+              {([
+                { value: "characters", label: "Персонажі" },
+                { value: "selections", label: "Піки й бани" },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.value}
+                  id={`draft-${tab.value}-tab`}
+                  type="button"
+                  role="tab"
+                  aria-selected={mobileDraftView === tab.value}
+                  aria-controls={`draft-${tab.value}-panel`}
+                  tabIndex={mobileDraftView === tab.value ? 0 : -1}
+                  onClick={() => setMobileDraftView(tab.value)}
+                  onKeyDown={(event) => {
+                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                    event.preventDefault();
+                    const next = event.key === "Home" ? "characters" : event.key === "End" ? "selections" : tab.value === "characters" ? "selections" : "characters";
+                    setMobileDraftView(next);
+                    document.getElementById(`draft-${next}-tab`)?.focus();
+                  }}
+                  className={`min-h-11 xl:min-h-8 rounded-xl border px-2 text-sm font-semibold transition ${mobileDraftView === tab.value ? "border-violet-200/50 bg-violet-400/25 text-white" : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10"}`}
+                >{tab.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {message && <div role="status" className="my-4 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/85">{message}</div>}
 
         {!loading && room && (
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -1720,18 +1830,15 @@ export default function RoomPage() {
                   type="button"
                   onClick={() => void setCurrentUserReady()}
                   disabled={savingDraft || isCurrentUserReady}
-                  className="rounded-lg border border-emerald-200/60 bg-emerald-500/35 px-3 py-2 text-sm font-semibold text-emerald-50 hover:bg-emerald-500/45 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="hidden min-h-11 xl:min-h-8 xl:inline-flex xl:items-center rounded-lg border border-emerald-200/60 bg-emerald-500/35 px-3 py-2 text-sm xl:px-2.5 xl:py-1 xl:text-xs font-semibold text-emerald-50 hover:bg-emerald-500/45 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCurrentUserReady ? "Ти готовий" : "ГОТОВИЙ"}
                 </button>
               )}
-              <Link href="/" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
-                На головну
-              </Link>
               <button
                 type="button"
                 onClick={leaveRoom}
-                className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-sm text-red-200 hover:bg-red-500/15"
+                className="min-h-11 xl:min-h-8 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2 text-sm xl:px-3 xl:py-1 xl:text-xs text-red-200 hover:bg-red-500/15"
               >
                 Вийти з кімнати
               </button>
@@ -1747,7 +1854,7 @@ export default function RoomPage() {
                     value={firstTurnUserId ?? ""}
                     onChange={(event) => void setFirstTurnUser(event.target.value)}
                     disabled={!isHost || savingDraft || isDualDraftStarted}
-                    className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-11 xl:min-h-8 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {hostPlayer?.user_id && (
                       <option value={hostPlayer.user_id} className="bg-slate-900 text-white">
@@ -1772,14 +1879,14 @@ export default function RoomPage() {
                 onClick={() => void resetDraftSelections()}
                 disabled={!isHost || savingDraft}
                 title={isHost ? "Очистити всі імуни/бани/піки" : "Доступно тільки гравцю 1"}
-                className="rounded-lg border border-rose-300/30 bg-rose-400/15 px-3 py-1 text-sm text-rose-100 hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 xl:min-h-8 rounded-lg border border-rose-300/30 bg-rose-400/15 px-3 py-1 text-sm xl:px-2.5 xl:text-xs text-rose-100 hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Скинути все
               </button>
               <button
                 type="button"
-                onClick={loadRoom}
-                className="rounded-lg border border-white/15 bg-white/10 px-3 py-1 text-sm hover:bg-white/15"
+                onClick={() => void loadRoom({ joinIfAvailable: true })}
+                className="min-h-11 xl:min-h-8 rounded-lg border border-white/15 bg-white/10 px-3 py-1 text-sm xl:px-2.5 xl:text-xs hover:bg-white/15"
               >
                 Оновити
               </button>
@@ -1787,7 +1894,7 @@ export default function RoomPage() {
           </div>
         )}
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4 md:p-5">
+        <div className="mt-4 min-w-0 rounded-2xl border border-white/10 bg-black/25 p-2 sm:p-4 md:p-5">
 
           {loading ? (
             <p className="text-sm text-white/70">Завантаження кімнати...</p>
@@ -1802,6 +1909,7 @@ export default function RoomPage() {
               {draftMode === "dual_roster" ? (
                 <div className="relative p-1 md:p-2">
                   <div className="relative grid gap-2 lg:grid-cols-2">
+                    <div id="draft-selections-panel" role="tabpanel" aria-labelledby="draft-selections-tab" className={mobileDraftView === "selections" ? "contents" : "hidden xl:contents"}>
                     {renderDualSelectionQuarter(
                       `${getDisplayName(hostPlayer) || "Гравець 1"}`,
                       indexedImmunities,
@@ -1824,13 +1932,15 @@ export default function RoomPage() {
                       dualPickOrderNumbers.guest,
                       "guest"
                     )}
+                    </div>
+                    <div id="draft-characters-panel" role="tabpanel" aria-labelledby="draft-characters-tab" className={mobileDraftView === "characters" ? "contents" : "hidden xl:contents"}>
                     {renderDualRosterQuarter(hostPlayer, "Персонажі")}
-                    {renderDualRosterQuarter(guestPlayer, "Персонажі")}
+                    {renderDualRosterQuarter(guestPlayer, "Персонажі")}                    </div>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="order-1 xl:order-2 rounded-2xl border border-violet-300/20 bg-gradient-to-b from-violet-500/16 to-indigo-500/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                  <div id="draft-selections-panel" role="tabpanel" aria-labelledby="draft-selections-tab" className={`${mobileDraftView === "selections" ? "block" : "hidden"} order-1 min-w-0 rounded-2xl border border-violet-300/20 bg-gradient-to-b from-violet-500/16 to-indigo-500/10 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-4 xl:order-2 xl:block`}>
                     <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-2">
                       <p className="mb-2 text-center text-[11px] uppercase tracking-[0.12em] text-white/60">Кому банимо/пікаємо</p>
                       <div className="grid grid-cols-2 gap-2">
@@ -1917,7 +2027,7 @@ export default function RoomPage() {
                     </div>
                   </div>
 
-                  <div className="order-2 xl:order-1">
+                  <div id="draft-characters-panel" role="tabpanel" aria-labelledby="draft-characters-tab" className={`${mobileDraftView === "characters" ? "block" : "hidden"} order-2 min-w-0 xl:order-1 xl:block`}>
                     {renderPlayerPanel(
                       sortedPlayers.find((player) => player.user_id === selectedSingleRosterUserId) ?? null,
                       "Ростер драфту",
@@ -1932,7 +2042,6 @@ export default function RoomPage() {
 
         <AbyssNowPanel className="mt-4" collapsible defaultOpen={false} />
 
-        {message && <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/85">{message}</div>}
       </section>
     </main>
   );

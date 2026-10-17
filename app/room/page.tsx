@@ -379,8 +379,8 @@ export default function RoomLobbyPage() {
           <Link href="/" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
             На головну
           </Link>
-          <Link href="/collection" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
-            Мій список персонажів
+          <Link href="/profile" className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm hover:bg-white/15">
+            Мій профіль
           </Link>
         </div>
       </section>

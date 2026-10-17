@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AbyssNowPanel } from "./components/AbyssNowPanel";
+import { PlayerSearch } from "./components/PlayerSearch";
 import { supabase } from "../lib/supabase";
 
 
@@ -66,6 +67,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[radial-gradient(50%_55%_at_92%_18%,rgba(129,95,255,0.32)_0%,rgba(84,39,199,0.16)_42%,transparent_74%),radial-gradient(85%_65%_at_15%_0%,#0f5f7e_0%,#061b45_45%,#040a24_100%),radial-gradient(70%_45%_at_50%_105%,rgba(255,78,158,0.55)_0%,rgba(176,39,117,0.35)_35%,transparent_72%)] text-white">
       <section className="mx-auto flex w-full max-w-screen-xl flex-col items-center justify-start px-4 pt-10 pb-12 text-center sm:px-6 md:px-8 md:pt-16">
+        <PlayerSearch />
         <h1 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
           Драфтилка для батлів
         </h1>
@@ -76,10 +78,10 @@ export default function Home() {
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link
-            href="/collection"
+            href="/profile"
             className="rounded-2xl border border-white/20 bg-white/5 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
           >
-            Мої персонажі
+            Мій профіль
           </Link>
 
           <Link
@@ -125,7 +127,7 @@ export default function Home() {
               <p className="text-xs uppercase tracking-[0.18em] text-violet-200/80">Крок 1</p>
               <h3 className="mt-2 text-lg font-semibold">Відмітьте, хто у вас є</h3>
               <p className="mt-2 text-sm text-white/70">
-                На сторінці “Мої персонажі" оберіть персонажів, які у вас є. Воно збережеться і підв'яжеться до акаунту.
+                На сторінці «Мій профіль» оберіть персонажів, які у вас є. Ростер збережеться у вашому акаунті.
               </p>
             </div>
 

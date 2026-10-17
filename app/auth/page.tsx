@@ -234,10 +234,10 @@ export default function AuthPage() {
 
         <div className="mt-5 flex flex-wrap gap-3 text-sm">
           <Link
-            href="/collection"
+            href="/profile"
             className="rounded-xl border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15"
           >
-            Мої персонажі
+            Мій профіль
           </Link>
           <Link
             href="/"
