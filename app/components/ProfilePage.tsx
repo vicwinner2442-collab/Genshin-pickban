@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCharacterImageUrl } from "../../lib/character-image";
 import { supabase } from "../../lib/supabase";
 import { ResponsiveFilters } from "./ResponsiveFilters";
@@ -117,18 +117,6 @@ function getLocalizedElement(element: string | null) {
 function getLocalizedWeapon(weapon: string | null) {
   if (!weapon) return null;
   return WEAPON_LABELS[weapon] ?? weapon;
-}
-
-function getRarityBadgeClass(rarity: number | null) {
-  if (rarity === 5) {
-    return "border-yellow-300/30 bg-yellow-400/15 text-yellow-100";
-  }
-
-  if (rarity === 4) {
-    return "border-violet-300/35 bg-violet-500/15 text-violet-100";
-  }
-
-  return "border-white/15 bg-white/10 text-white/80";
 }
 
 export default function ProfilePage({ profileId }: { profileId?: string }) {
@@ -358,20 +346,6 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
     setSelectedBySlug((prev) => ({ ...prev, [slug]: 0 }));
     setSelectedLevelsBySlug((prev) => ({ ...prev, [slug]: 10 }));
     setLevelDraftsBySlug((prev) => ({ ...prev, [slug]: "10" }));
-  };
-
-  const handleCharacterCardClick = (slug: string) => {
-    if (!isOwner || savingSlug === slug) return;
-    void toggleCharacter(slug);
-  };
-
-  const handleCharacterCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, slug: string) => {
-    if (!isOwner || event.target !== event.currentTarget || savingSlug === slug) return;
-
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      void toggleCharacter(slug);
-    }
   };
 
   const updateConstellation = async (slug: string, constellation: number) => {
@@ -622,90 +596,46 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                   : "Нічого не знайдено. Спробуйте змінити фільтри."}
               </div>
             ) : (
-              <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid grid-cols-3 items-start gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
                 {filteredCharacters.map((character) => {
                   const isSelected = selectedSet.has(character.slug);
-
+                  const isSaving = savingSlug === character.slug;
+                  const level = selectedLevelsBySlug[character.slug] ?? 10;
+                  const constellation = selectedBySlug[character.slug] ?? 0;
+                  const element = getLocalizedElement(character.element);
                   return (
-                    <div
-                      key={character.slug}
-                      role={isOwner ? "button" : undefined}
-                      tabIndex={!isOwner || savingSlug === character.slug ? -1 : 0}
-                      aria-pressed={isOwner ? isSelected : undefined}
-                      aria-disabled={savingSlug === character.slug}
-                      onClick={isOwner ? () => handleCharacterCardClick(character.slug) : undefined}
-                      onKeyDown={isOwner ? (event) => handleCharacterCardKeyDown(event, character.slug) : undefined}
-                      className={`group rounded-xl border p-3 text-left transition ${
-                        isSelected
-                          ? "border-violet-300/35 bg-violet-500/10"
-                          : "border-white/10 bg-slate-900/35 hover:bg-slate-800/50"
-                      } ${savingSlug === character.slug ? "cursor-not-allowed opacity-80" : isOwner ? "cursor-pointer" : ""}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="shrink-0">
+                    <article key={character.slug} className={`relative min-w-0 rounded-xl border bg-[#111827] transition ${isSelected ? "border-white/20" : "border-white/5"} ${isSaving ? "opacity-60" : ""}`}>
+                      <button type="button" disabled={!isOwner || isSaving}
+                        aria-label={`${character.name}: ${isSelected ? "прибрати з ростеру" : "додати в ростер"}`}
+                        aria-pressed={isOwner ? isSelected : undefined}
+                        onClick={() => void toggleCharacter(character.slug)}
+                        className="group block w-full overflow-hidden rounded-t-[11px] text-left outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-default">
+                        <div className={`relative aspect-[4/5] overflow-hidden ${character.rarity === 5 ? "bg-gradient-to-b from-[#695342] to-[#b08756]" : "bg-gradient-to-b from-[#494565] to-[#8278a6]"} ${!isSelected ? "opacity-40 grayscale" : ""}`}>
                           {character.image_path ? (
-                            <Image
-                              src={getCharacterImageUrl(character.image_path)}
-                              alt={character.name}
-                              width={64}
-                              height={64}
-                              className="size-16 rounded-lg object-cover ring-1 ring-white/10"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="flex size-16 items-center justify-center rounded-lg bg-white/10 text-xs text-white/50">
-                              No image
-                            </div>
-                          )}
+                            <Image src={getCharacterImageUrl(character.image_path)} alt={character.name} fill
+                              sizes="(max-width: 639px) 33vw, (max-width: 1023px) 20vw, 160px"
+                              className="object-cover object-top transition-transform duration-200 group-hover:scale-105" unoptimized />
+                          ) : <span className="absolute inset-0 flex items-center justify-center text-3xl text-white/40">{character.name.charAt(0)}</span>}
+                          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+                          {element && <span className={`absolute left-1.5 top-1.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium backdrop-blur-md ${getElementBadgeClass(element)}`}>{element}</span>}
+                          {isSelected && <span className="absolute right-1.5 top-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[11px] font-medium text-white">C{constellation}</span>}
+                          <span className="absolute bottom-1.5 left-2 text-[10px] tracking-wider text-amber-200">{"★".repeat(character.rarity === 5 ? 5 : 4)}</span>
                         </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <h3 title={character.name} className="truncate text-sm font-medium sm:text-base">{character.name}</h3>
-
-                              <div className="mt-1.5 flex flex-wrap gap-1">
-                                <span
-                                  className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${getElementBadgeClass(
-                                    getLocalizedElement(character.element)
-                                  )}`}
-                                >
-                                  {getLocalizedElement(character.element) ?? "Unknown"}
-                                </span>
-
-                                <span className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${getRarityBadgeClass(character.rarity)}`}>
-                                  {character.rarity ?? "?"}★
-                                </span>
-                              </div>
+                        <h3 title={character.name} className="truncate px-2 pt-2 pb-1 text-center text-xs font-medium text-white sm:text-sm">{character.name}</h3>
+                      </button>
+                      {isOwner && isSelected ? (
+                        <details className="relative" onToggle={(event) => { if (!event.currentTarget.open) setOpenLevelPickerSlug(null); }}>
+                          <summary aria-label={`Редагувати рівень і консти: ${character.name}`} className="flex min-h-9 cursor-pointer list-none items-center justify-center gap-1 pb-1 text-xs text-white/60 transition hover:text-white [&::-webkit-details-marker]:hidden">
+                            Рів. {level}
+                            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m16 3 5 5L9 20l-6 1 1-6Z" /><path d="m14 5 5 5" /></svg>
+                          </summary>
+                          <div className="fixed left-1/2 top-1/2 z-50 w-64 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/20 bg-[#141c2d] p-4 shadow-[0_0_0_100vmax_rgba(0,0,0,0.65)]" onKeyDown={(event) => { if (event.key === "Escape") { event.currentTarget.closest("details")?.removeAttribute("open"); setOpenLevelPickerSlug(null); } }}>
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                              <p className="truncate text-sm font-medium">{character.name}</p>
+                              <button type="button" aria-label="Закрити" className="flex size-9 shrink-0 items-center justify-center rounded-md text-white/60 hover:bg-white/10 hover:text-white" onClick={(event) => { event.currentTarget.closest("details")?.removeAttribute("open"); setOpenLevelPickerSlug(null); }}>×</button>
                             </div>
-
-                            {isOwner && <span
-                              className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium transition ${
-                                isSelected ? "bg-violet-200 text-slate-950" : "bg-white/10 text-white/70"
-                              }`}
-                            >
-                              {savingSlug === character.slug ? "..." : isSelected ? "Є" : "Немає"}
-                            </span>}
-                          </div>
-
-                        </div>
-                      </div>
-
-                          <div className="mt-3 border-t border-white/10 pt-2 text-xs text-white/75">
-                            {!isOwner ? (
-                              <dl className="grid grid-cols-2 gap-3">
-                                <div className="flex items-center justify-between gap-2">
-                                  <dt className="text-white/80">Консти:</dt>
-                                  <dd className="text-xs font-semibold text-white">C{selectedBySlug[character.slug] ?? 0}</dd>
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                  <dt className="text-white/80">Рівень:</dt>
-                                  <dd className="text-xs font-semibold text-white">{selectedLevelsBySlug[character.slug] ?? 10}</dd>
-                                </div>
-                              </dl>
-                            ) : isSelected ? (
                               <div
-                                className="grid grid-cols-2 gap-3"
+                                className="space-y-3"
                                 onClick={(event) => event.stopPropagation()}
                                 onPointerDown={(event) => event.stopPropagation()}
                               >
@@ -793,11 +723,10 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                                   </span>
                                 </label>
                               </div>
-                            ) : (
-                              <span className="text-white/55">Додайте персонажа, щоб обрати консту та рівень</span>
-                            )}
                           </div>
-                    </div>
+                        </details>
+                      ) : <p className="flex min-h-9 items-center justify-center pb-1 text-xs text-white/50">{isSelected ? `Рів. ${level}` : "Не додано"}</p>}
+                    </article>
                   );
                 })}
               </div>
