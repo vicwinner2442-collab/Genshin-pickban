@@ -622,7 +622,7 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                   : "Нічого не знайдено. Спробуйте змінити фільтри."}
               </div>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {filteredCharacters.map((character) => {
                   const isSelected = selectedSet.has(character.slug);
 
@@ -635,52 +635,52 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                       aria-disabled={savingSlug === character.slug}
                       onClick={isOwner ? () => handleCharacterCardClick(character.slug) : undefined}
                       onKeyDown={isOwner ? (event) => handleCharacterCardKeyDown(event, character.slug) : undefined}
-                      className={`group rounded-3xl border p-5 text-left shadow-lg transition ${
+                      className={`group rounded-xl border p-3 text-left transition ${
                         isSelected
-                          ? "border-violet-300/50 bg-violet-500/12 ring-1 ring-violet-300/30"
+                          ? "border-violet-300/35 bg-violet-500/10"
                           : "border-white/10 bg-slate-900/35 hover:bg-slate-800/50"
                       } ${savingSlug === character.slug ? "cursor-not-allowed opacity-80" : isOwner ? "cursor-pointer" : ""}`}
                     >
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-start gap-3">
                         <div className="shrink-0">
                           {character.image_path ? (
                             <Image
                               src={getCharacterImageUrl(character.image_path)}
                               alt={character.name}
-                              width={88}
-                              height={88}
-                              className="h-[88px] w-[88px] rounded-2xl object-cover ring-1 ring-white/10"
+                              width={64}
+                              height={64}
+                              className="size-16 rounded-lg object-cover ring-1 ring-white/10"
                               unoptimized
                             />
                           ) : (
-                            <div className="flex h-[88px] w-[88px] items-center justify-center rounded-2xl bg-white/10 text-xs text-white/50">
+                            <div className="flex size-16 items-center justify-center rounded-lg bg-white/10 text-xs text-white/50">
                               No image
                             </div>
                           )}
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <h3 className="truncate text-lg font-semibold md:text-xl">{character.name}</h3>
+                              <h3 title={character.name} className="truncate text-sm font-medium sm:text-base">{character.name}</h3>
 
-                              <div className="mt-2 flex flex-wrap gap-2">
+                              <div className="mt-1.5 flex flex-wrap gap-1">
                                 <span
-                                  className={`rounded-full border px-3 py-1 text-xs font-medium ${getElementBadgeClass(
+                                  className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${getElementBadgeClass(
                                     getLocalizedElement(character.element)
                                   )}`}
                                 >
                                   {getLocalizedElement(character.element) ?? "Unknown"}
                                 </span>
 
-                                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getRarityBadgeClass(character.rarity)}`}>
+                                <span className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${getRarityBadgeClass(character.rarity)}`}>
                                   {character.rarity ?? "?"}★
                                 </span>
                               </div>
                             </div>
 
                             {isOwner && <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                              className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium transition ${
                                 isSelected ? "bg-violet-200 text-slate-950" : "bg-white/10 text-white/70"
                               }`}
                             >
@@ -688,9 +688,12 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                             </span>}
                           </div>
 
-                          <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/75">
+                        </div>
+                      </div>
+
+                          <div className="mt-3 border-t border-white/10 pt-2 text-xs text-white/75">
                             {!isOwner ? (
-                              <dl className="space-y-2">
+                              <dl className="grid grid-cols-2 gap-3">
                                 <div className="flex items-center justify-between gap-2">
                                   <dt className="text-white/80">Консти:</dt>
                                   <dd className="text-xs font-semibold text-white">C{selectedBySlug[character.slug] ?? 0}</dd>
@@ -702,7 +705,7 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                               </dl>
                             ) : isSelected ? (
                               <div
-                                className="space-y-2"
+                                className="grid grid-cols-2 gap-3"
                                 onClick={(event) => event.stopPropagation()}
                                 onPointerDown={(event) => event.stopPropagation()}
                               >
@@ -716,7 +719,7 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                                     onPointerDown={(event) => event.stopPropagation()}
                                     onClick={(event) => event.stopPropagation()}
                                     onChange={(event) => void updateConstellation(character.slug, Number(event.target.value))}
-                                    className="min-h-11 min-w-16 rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-base text-white outline-none sm:text-sm"
+                                    className="h-11 w-16 shrink-0 rounded-md border border-white/15 bg-white/5 px-2 text-base text-white outline-none sm:h-8 sm:text-sm"
                                   >
                                     {Array.from({ length: 7 }, (_, index) => (
                                       <option key={index} value={index} className="bg-slate-900 text-white">
@@ -757,7 +760,7 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                                           event.currentTarget.blur();
                                         }
                                       }}
-                                      className="min-h-11 w-16 rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-base text-white outline-none focus:border-violet-300/45 sm:text-sm"
+                                      className="h-11 w-16 rounded-md border border-white/15 bg-white/5 px-2 text-base text-white outline-none focus:border-violet-300/45 sm:h-8 sm:text-sm"
                                     />
 
                                     {isOwner && openLevelPickerSlug === character.slug && (
@@ -794,8 +797,6 @@ export default function ProfilePage({ profileId }: { profileId?: string }) {
                               <span className="text-white/55">Додайте персонажа, щоб обрати консту та рівень</span>
                             )}
                           </div>
-                        </div>
-                      </div>
                     </div>
                   );
                 })}
